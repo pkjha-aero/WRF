@@ -1,0 +1,21 @@
+# registry.mesoforce
+#
+# Added by Jeff Mirocha April, 2016
+#
+
+state    real     mtend_u_adv    {mesotot}   misc      1       -       r       "mtend_u_adv"   	"mesoscale advective tendencies for u"                  "m s-2"
+state    real     mtend_v_adv    {mesotot}   misc      1       -       r       "mtend_v_adv"   	"mesoscale advective tendencies for v"                  "m s-2"
+state    real     mtend_u_pgf    {mesotot}   misc      1       -       r       "mtend_u_pgf"   	"mesoscale pgf tendencies for u geostrophic"            "m s-2"
+state    real     mtend_v_pgf    {mesotot}   misc      1       -       r       "mtend_v_pgf"    "mesoscale pgf tendencies for v geostrophic"            "m s-2"
+state    real     mtend_th       {mesotot}   misc      1       -       r       "mtend_th"       "mesoscale tendencies for t"                            "K s-1"
+state    real     mtend_z        {mesotot}   misc      1       -       r       "mtend_z"        "mesoscale tendencies height levels"                    "m"
+state	 real     mtend_t        {mesot}     misc      1       -       r       "mtend_t"        "mesoscale tendencies update time in seconds"           "s"
+state	 real     mvalu_hfx      {mesot}     misc      1       -       r       "mvalu_hfx"      "mesoscale heat flux value"                             "K m s-1"
+state	 real     mvalu_tsk      {mesot}     misc      1       -       r       "mvalu_tsk"      "mesoscale skin temperature value"                      "K"
+state    real     meso_hfx              -    misc      1       -       r       "meso_hfx"       "mesoscale surface heat flux"                           "K m s-1"
+state	 real     meso_tsk              -    misc      1       -       r       "meso_tsk"       "mesoscale surface skin temperature"                    "K"
+
+rconfig  integer  meso_force     namelist,physics      1       0       rh                        "1 if using mesoscale forcing"            
+rconfig  integer  n_meso_t_levs  namelist,physics      1       1       rh                        "number of time levels of mesoscale forcing"
+rconfig  integer  n_meso_z_levs  namelist,physics      1       1       rh                        "number of height levels of mesoscale forcing"
+rconfig  integer  n_meso_total   namelist,physics      1       1       rh                        "number of time levels of mesoscale forcing"

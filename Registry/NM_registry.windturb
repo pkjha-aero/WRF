@@ -1,0 +1,70 @@
+# registry.windturb
+#
+# added by Branko Kosovic 07/02/2012
+#
+state   real    wp_acc_u        ikj     misc          1       -       h      "wp_acc_u"        ""      "m2 s-1"
+state   real    wp_acc_v        ikj     misc          1       -       h      "wp_acc_v"        ""      "m2 s-1"
+state   real    wp_acc_w        ikj     misc          1       -       h      "wp_acc_w"        ""      "m2 s-1"
+
+state   real    wp_thrust       ikj      misc    1       -       h      "wp_thrust"          ""      "N"	
+state   real    wp_torque       ikj      misc    1       -       h      "wp_torque"          ""      "Nm"
+state   real    wp_rotrate      ikj      misc    1       -       h      "wp_rotrate"         ""      "rad s-1"
+state   real    wp_power        ikj      misc    1       -       h      "wp_power"           ""      "W"   
+
+state 	integer trbloc_ugx	{ntrb}	 misc	 1	 -	 r	"trbloc_ugx"	     "u-staggered global x turb location" ""  #NM staggered
+state	integer trbloc_mlx	{ntrb}   misc	 1	 -	 -	"trbloc_mlx"	     "mass-center local x turb location"  "" #NM local processor
+state	integer trbloc_vgy	{ntrb}	 misc	 1	 -	 r	"trbloc_vgy"	     "v-staggered global y turb location" "" 
+state   integer trbloc_mly	{ntrb}	 misc	 1	 -	 -	"trbloc_mly"	     "mass-center local y turb location" ""
+state	integer trbloc_ulx	{ntrb}	 misc	 1	 -	 -	"trbloc_ulx"	     "u-staggered local x turb location" ""
+state	integer trbloc_vly	{ntrb}	 misc	 1	 -	 -	"trbloc_vly"	     "v-staggered local y turb location" "" 
+state	integer	upwnd_ugx	{ntrb}	 misc	 1	 -	 r	"upwnd_ugx"	     "upwind u-staggered wind speed location" ""
+state	integer upwnd_vgy	{ntrb}	 misc	 1	 -	 r	"upwnd_vgy"	     "upwind v-staggered wind speed location" ""	
+state	integer upwnd_mgx	{ntrb}   misc	 1	 -	 r	"upwnd_mgx"	     "upwind mass-centered global x wnd spd loc" ""
+state	integer upwnd_mgy	{ntrb}	 misc	 1	 -	 r	"upwnd_mgy"	     "upwind mass-centered global y wnd spd loc" ""
+state	integer trblsp_xs	{ntrb}	 misc	 1	 -	 -	"trblsp_xs"	     "local turbine span x start"    "" #NM turb area span on proc mass coord xdir
+state	integer trblsp_xe	{ntrb}	 misc	 1	 -	 -	"trblsp_xe"	     "local turbine span x end"	     "" #NM turb area span staggered coord xdir
+state	integer trblsp_ys	{ntrb}	 misc	 1	 -	 -	"trblsp_ys"	     "local turbine span y start"     "" #NM turb area span on proc mass coord ydir
+state	integer trblsp_ye	{ntrb}	 misc	 1	 -	 -	"trblsp_ye"	     "local turbine span y end"	     "" #NM turb area span staggered coord
+state	integer trblsp_zs	{ntrb}	 misc	 1	 -	 -	"trblsp_zs"	     "local turbine span z start"     "" #NM turb area span on proc mass coord zdir
+state	integer trblsp_ze	{ntrb}	 misc	 1	 -	 -	"trblsp_ze"	     "local turbine span z end"	     "" #NM turb area span staggered coord
+state   real	x_turbine	{ntrb}	 misc	 1	 -	 rh	"x_turbine"	     "x coordinate of a turbine"	"m"
+state	real	y_turbine	{ntrb}	 misc	 1	 -	 rh	"y_turbine"	     "y coordinate of a turbine"	"m"
+state	real	hub_height      {ntrb}   misc    1       -       rh      "hub_height"            "hub height of a turbine"        "m" 
+state   real    rotor_diameter  {ntrb}   misc    1       -       rh      "rotor_diameter"        "rotor diameter of a turbine"    "m" 
+state   real    blade_length    {ntrb}   misc    1       -       rh      "blade_length"          "blade length"                   "m" 
+state   real    phi_turbine     {ntrb}   misc    1       -       rh      "phi_turbine"         "angle between turbine and x axis"  "deg"  	
+state 	real	cutinspd	{ntrb}	 misc 	 1	 -	 rh	"cutin"		     "cut in speed of turbine"		  "m/s"
+state	real	cutoutspd	{ntrb}	 misc	 1	 -	 rh	"cutout"	     "cut out speed of turbine"		  "m/s"
+state   real  	u_x		i	 misc	 1	 -	 -	"u_x"		     "u nodes x coord distance (stagger)"     "m"
+state	real	vw_x		i	 misc	 1	 -	 -	"vw_x"		     "vw nodes x coord distance (mass center)"     "m"
+state	real	v_y		j	 misc	 1	 -	 -	"v_y"		     "v nodes y coord distance (stagger)"	     "m"
+state	real	uw_y		j	 misc	 1	 -	 -	"uw_y"		     "uw nodes y coord distance (mass center)"	     "m"
+state	real	dau		i{ntrb}j misc	 1	 -	 rh	"dau"		     "normal distance from u node to axial plane (n)"  "m"
+state   real	dav		i{ntrb}j misc	 1	 -	 rh	"dav"		     "normal distance from v node to axial plane (n)"  "m"
+state   real    daw		i{ntrb}j misc	 1	 -       rh     "daw"		     "normal distance from w node to axial plane (n)"  "m"
+state	real	dru		i{ntrb}j misc	 1	 -	 rh	"dru"		     "noraml distance from u node to rotor plane"    "m"
+state	real 	drv		i{ntrb}j misc    1	 -	 rh	"drv"		     "normal distance from v node to rotor plane"    "m"
+state	real	drw		i{ntrb}j misc	 1	 -	 rh	"drw"	    	     "normal distance from w node to rotor plane"    "m"
+state	real	ywacc_trb	{ntrb}	 misc	 1	 -	 rh	"ywacc_trb"	     "yaw error accumulation"        "deg2 s"
+state   logical yaw		{ntrb}	 misc	 1	 -	 rh	"yaw"		     "if turbine yawing or not"      "t/f"
+state	real	ywert		{ntmetrb} misc	 1	 -	 rh	"yawert"	     "yaw error time series"	     "deg"
+state 	real	v0t		{ntmetrb} misc	 1	 -	 rh	"v0_time_series"     "hub height wind speed timeseries"  "m s-1"
+state	logical rst_cust	-	  misc	 1	 -	 -	"rst_cust"	     ""	     ""
+state   integer yetmct		{ntrb}	 misc	 1	 -	 r	"yetmct"	     "yaw error time counter"  ""
+state	real	x_s_turbA	{ntrb}	 misc	 1	 -	 -	"x_s_turbA"	     "first x distance to calc for turbine"  "m"
+state   real	x_e_turbA	{ntrb}	 misc	 1	 -	 -	"x-e_turbA"	     "last x distance to calc for turbine" "m"
+state	real	y_s_turbA	{ntrb}	 misc	 1	 -	 -	"y_s_turbA"	     "first y distance to calc for turbine"  "m"
+state   real	y_e_turbA	{ntrb}	 misc	 1	 -	 -	"y-e_turbA"	     "last y distance to calc for turbine" "m"
+
+rconfig   integer wp_opt                namelist,physics      max_domains    0      rh      "wp_opt"            ""      ""
+rconfig   real    wp_acc_amp            namelist,physics      max_domains    0      rh      "wp_acc_amp"        ""      ""
+rconfig   real    norm_dist             namelist,physics      max_domains    0      rh      "norm_dist"         ""      ""
+rconfig   real    alpha                 namelist,physics      max_domains    0      rh      "alpha"             ""      ""
+rconfig   integer n_turbines            namelist,physics      1              0      rh      "n_turbines"        ""      ""
+rconfig   integer n_timeseries          namelist,physics      1              0      rh      "n_timeseries"      ""      ""
+rconfig   integer n_tmeturb             namelist,physics      1              0      rh      "n_tmeturb"         ""      "" #n_turbines*n_timeseries
+rconfig character windturb_spec		namelist,physics      1		   "none"   -	    "windturb_spec"	"" 	"" #reading in turb info
+
+package noturbine  wp_opt==0             -             -
+package genactdisk wp_opt==2             -             state:wp_acc_u,wp_acc_v,wp_acc_w,wp_thrust,wp_torque,wp_rotrate,wp_power,trbloc_ugx,trbloc_mlx,trbloc_vgy,trbloc_mly,trbloc_ulx,trbloc_vly,upwnd_ugx,upwnd_vgy,upwnd_mgx,upwnd_mgy,trblsp_xs,trblsp_xe,trblsp_ys,trblsp_ye,trblsp_zs,trblsp_ze,x_turbine,y_turbine,hub_height,rotor_diameter,blade_length,phi_turbine,cutinspd,cutoutspd,u_x,vw_x,v_y,uw_y,dau,dav,daw,dru,drv,drw,ywacc_trb,yaw,ywert,v0t,rst_cust,yetmct,x_s_turbA,x_e_turbA,y_s_turbA,y_e_turbA
+
