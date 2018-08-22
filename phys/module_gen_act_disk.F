@@ -1060,13 +1060,20 @@ MODULE module_gen_act_disk
 
                 acc_u = (1.0/adenom2)*exp(-(drut**2)/bdenom2) !NM 1-D
 
-                fnft = calc_fnft_psu15( v0, rho, blades, blade_length(n), rotor_diameter(n),   &
-                                        radius, pitchdeg, rpm, dscale, cscale) 
+                !RSA adding logic to prevent fx from being NaN. See explanation in calc_fnft below.
+                if ( v0 .gt. 0.0 ) then
+                   fnft = calc_fnft_psu15( v0, rho, blades, blade_length(n), rotor_diameter(n),   &
+                                           radius, pitchdeg, rpm, dscale, cscale) 
 
-                fn = fnft(1)
-                ft = fnft(2)
-  
-                fx = fn*cos(theta)*cos(tilt) + ft*sin(zeta)*sin(theta) - ft*cos(zeta)*sin(tilt)*cos(theta)
+                   fn = fnft(1)
+                   ft = fnft(2)
+     
+                   fx = fn*cos(theta)*cos(tilt) + ft*sin(zeta)*sin(theta) - ft*cos(zeta)*sin(tilt)*cos(theta)
+                else
+                   !RSA set fx to 0 for now, but turbine should eventually yaw into place.
+                   ! write(*,*) "RSA to prevent NaNs, skipping call to calc_fnft for fx: i,j,k=",i,j,k 
+                   fx = 0.0
+                endif
                 
 !JDM TEST SIGN 12/2014     fx = fn*cos(theta)*cos(tilt) 
 !JDM TEST SIGN 12/2014     fx = ft*sin(zeta)*sin(theta) 
@@ -1122,13 +1129,20 @@ MODULE module_gen_act_disk
 
                  acc_v = (1.0/adenom2)*exp(-(drvt**2)/bdenom2) !NM 1-D
 
-                 fnft = calc_fnft_psu15( v0, rho, blades, blade_length(n), rotor_diameter(n),   &
-                                         radius, pitchdeg, rpm, dscale, cscale)  
+                !RSA adding logic to prevent fy from being NaN. See explanation in calc_fnft below.
+                if ( v0 .gt. 0.0 ) then
+                   fnft = calc_fnft_psu15( v0, rho, blades, blade_length(n), rotor_diameter(n),   &
+                                           radius, pitchdeg, rpm, dscale, cscale)  
 
-                 fn = fnft(1)
-                 ft = fnft(2)
+                   fn = fnft(1)
+                   ft = fnft(2)
 
-                fy = fn*sin(theta)*cos(tilt) - ft*sin(zeta)*cos(theta) - ft*cos(zeta)*sin(tilt)*sin(theta)	!NM 
+                   fy = fn*sin(theta)*cos(tilt) - ft*sin(zeta)*cos(theta) - ft*cos(zeta)*sin(tilt)*sin(theta)	!NM 
+                else
+                   !RSA set fy to 0 for now, but turbine should eventually yaw into place.
+                   ! write(*,*) "RSA to prevent NaNs, skipping call to calc_fnft for fy: i,j,k=",i,j,k 
+                   fy = 0.0
+                endif
 
 !JDM TEST SIGN 12/2014      fy = fn*sin(theta)*cos(tilt)
 !JDM TEST SIGN 12/2014      fy = -ft*sin(zeta)*cos(theta)
@@ -1165,13 +1179,20 @@ MODULE module_gen_act_disk
 	
 	      acc_w = 	(1.0/adenom2)*exp(-(drwt**2)/bdenom2) !NM 1-D
 
-              fnft = calc_fnft_psu15( v0, rho, blades, blade_length(n), rotor_diameter(n), &
-                                      radius, pitchdeg, rpm, dscale, cscale ) 
+              !RSA adding logic to prevent fz from being NaN. See explanation in calc_fnft below.
+              if ( v0 .gt. 0.0 ) then
+                 fnft = calc_fnft_psu15( v0, rho, blades, blade_length(n), rotor_diameter(n), &
+                                         radius, pitchdeg, rpm, dscale, cscale ) 
 
-              fn = fnft(1)
-              ft = fnft(2) 
+                 fn = fnft(1)
+                 ft = fnft(2) 
 
-              fz = -fn*sin(tilt) - ft*cos(zeta)*cos(tilt) 	
+                 fz = -fn*sin(tilt) - ft*cos(zeta)*cos(tilt)
+              else
+                 !RSA set fz to 0 for now, but turbine should eventually yaw into place.
+                 ! write(*,*) "RSA to prevent NaNs, skipping call to calc_fnft for fz: i,j,k=",i,j,k 
+                 fz = 0.0
+              endif
 
 !JDM TEST SIGN      fz = -fn*sin(tilt) 
 !JDM TEST SIGN      fz = -ft*cos(zeta)*cos(tilt) 
@@ -1600,11 +1621,11 @@ FUNCTION calc_fnft_psu15( v0, rho, blades, bladelen, diameter,           &
            psi    = atan2(vn,vt)
            psideg = psi*180.0/pi
 
-!print*,'iter',iter
-!print*,'v0,  omega, radius',v0,radius,omega
-!print*,'vn, at, vt',vn,  at, vt
-!print*,'psi',psi
-!print*,'------'
+! print*,'iter',iter
+! print*,'v0,  omega, radius',v0,omega,radius
+! print*,'vn, at, vt',vn,at,vt
+! print*,'psi',psi
+! print*,'------'
 
 !       --Incidence angle  
  
@@ -1629,6 +1650,14 @@ FUNCTION calc_fnft_psu15( v0, rho, blades, bladelen, diameter,           &
 
 !          When psi < 0, fac1 and fac 2 can give bizarre answers, and resulting in tip and hub loss terms - NaN.
 !          Some logic should be added to keep things from going crazy
+           
+!          RSA update: the argument of acos should have an abs. value <= 1. When psi
+!          is negative, fac1 and/or fac2 are negative, causing exp(-fac) to be a
+!          large positive number, causing acos to return NaN. When psi is positive, fac1 and fac2 are
+!          positive, such that exp(-fac) is small and positive, which is ok.
+!          Thus, we have added logic around the calls to calc_fnft above such
+!          that when v0 < 0 (ie psi < 0), this function is not called and the
+!          force is set to 0. The turbine should still yaw into place eventually.
 
            if ( abs( psi ) .gt. 0.001 ) then
 
@@ -1648,6 +1677,14 @@ FUNCTION calc_fnft_psu15( v0, rho, blades, bladelen, diameter,           &
 !JDM             an = ( 1. + 4.0*lossfac*sin( psi )*sin( psi )/ ( solid*cn ) )**(-1.0)
 
               at = ( 4.0*lossfac*sin( psi )*cos( psi )/ ( solid*ct ) - 1.0 )**(-1.0)
+
+! print*,'inside of iteration'
+! print*,'iter',iter
+! print*,'omega, radius, radmin, radmax',omega,radius,radmin,radmax
+! print*,'v0, vn, vt, an, at',v0,vn,vt,an,at
+! print*,'psi, fac1, fac2',psi,fac1,fac2
+! print*,'tiploss, hubloss, lossfac',tiploss,hubloss,lossfac
+! print*,'------'
 
           else
 
@@ -1694,6 +1731,11 @@ print*,'what am I doing in here???'
 
        beta    = psi - xi
        betadeg = beta*180.0/pi
+
+! print*,'outside of iteration'
+! print*,'v0, vn, at, vt',v0,vn,at,vt
+! print*,'psideg, betadeg',psideg,betadeg
+! print*,'------'
 
 !    --Lift and drag coefficients     
   

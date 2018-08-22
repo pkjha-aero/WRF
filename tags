@@ -8,6 +8,27 @@
 1	dyn_nmm/module_initialize_tropical_cyclone.F	/^  1   continue$/;"	l	subroutine:result	file:
 1	dyn_nmm/module_initialize_tropical_cyclone.F	/^  1   format(i1)$/;"	l	subroutine:tcbogus	file:
 1	dyn_nmm/module_initialize_tropical_cyclone.F	/^ 1    t(j,i,k)=0.0$/;"	l	subroutine:env	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_cd10_psu15	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_cd2_psu15	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_cd3_psu15	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_cd4_psu15	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_cd5_psu15	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_cd6_psu15	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_cd7_psu15	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_cd8_psu15	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_cd9_psu15	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_chord_psu15	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_cl10_psu15	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_cl2_psu15	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_cl3_psu15	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_cl4_psu15	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_cl5_psu15	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_cl6_psu15	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_cl7_psu15	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_cl8_psu15	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_cl9_psu15	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_rpm_psu15	file:
+1	phys/jdm_08_2017_module_gen_act_disk.F	/^1 CONTINUE$/;"	l	function:calc_twist_psu15	file:
 1	phys/module_cam_mp_microp_aero.F	/^  1   continue$/;"	l	subroutine:maxsat	file:
 1	phys/module_cam_mp_ndrop.F	/^  1   continue$/;"	l	subroutine:maxsat	file:
 1	phys/module_cu_kfcup.F	/^                       1, 1,                                & !         "$/;"	l	subroutine:KF_cup_CPS	file:
@@ -827,6 +848,7 @@
 120	dyn_nmm/solve_nmm.F	/^  120   FORMAT(' Mean   =',G11.5)$/;"	l	subroutine:TIME_STATS	file:
 120	external/io_grib2/g2lib/pack_gp.F	/^ 120     CONTINUE$/;"	l	subroutine:PACK_GP	file:
 120	hydro/Routing/module_GW_baseflow.F	/^  120     if (i-1) 130,140,130$/;"	l	subroutine:gwstep	file:
+120	phys/NM_module_gen_act_disk.F	/^120	  CONTINUE   !NM reached end of file again$/;"	l	subroutine:gen_act_disk	file:
 120	phys/module_bl_mrf.F	/^  120 CONTINUE                                                                 $/;"	l	subroutine:MRF2D	file:
 120	phys/module_cu_kf.F	/^  120   CONTINUE                                             $/;"	l	subroutine:KFPARA	file:
 120	phys/module_ra_HWRF.F	/^120   CONTINUE$/;"	l	subroutine:SWR93	file:
@@ -920,6 +942,7 @@
 130	external/io_grib2/g2lib/pack_gp.F	/^ 130  CONTINUE$/;"	l	subroutine:PACK_GP	file:
 130	external/io_grib2/g2lib/reduce.F	/^ 130           NOVL=(NOV(L)+M-1)\/M$/;"	l	subroutine:REDUCE	file:
 130	hydro/Routing/module_GW_baseflow.F	/^  130     bb = bb + t(i-1,j,2)$/;"	l	subroutine:gwstep	file:
+130	phys/NM_module_gen_act_disk.F	/^130	  CONTINUE   !NM error so close file and istat error give for file$/;"	l	subroutine:gen_act_disk	file:
 130	phys/module_bl_mrf.F	/^  130 CONTINUE                                                                 $/;"	l	subroutine:MRF2D	file:
 130	phys/module_ra_HWRF.F	/^  130   CONTINUE$/;"	l	subroutine:RADFS	file:
 130	phys/module_ra_HWRF.F	/^130   CONTINUE$/;"	l	subroutine:SWR93	file:
@@ -1048,6 +1071,7 @@
 150	dyn_nmm/NMM_NEST_UTILS1.F	/^  150 K=NOLDM1$/;"	l	subroutine:SPLINE1	file:
 150	external/io_grib2/g2lib/pack_gp.F	/^ 150  NENDB=MAX(NENDB,MIN(KTOTAL+LMINPK,NXY))$/;"	l	subroutine:PACK_GP	file:
 150	hydro/Routing/module_GW_baseflow.F	/^  150     bb = bb + t(i,j,2)$/;"	l	subroutine:gwstep	file:
+150	phys/NM_module_gen_act_disk.F	/^ 150  CONTINUE$/;"	l	subroutine:gen_act_disk	file:
 150	phys/module_cu_bmj.F	/^  150 K=NOLDM1$/;"	l	subroutine:SPLINE	file:
 150	phys/module_ra_HWRF.F	/^150   CONTINUE$/;"	l	subroutine:SWR93	file:
 150	phys/module_ra_gfdleta.F	/^150   CONTINUE$/;"	l	subroutine:SWR93	file:
@@ -1255,6 +1279,7 @@
 2	dyn_nmm/module_initialize_tropical_cyclone.F	/^   2  continue$/;"	l	subroutine:result	file:
 2	dyn_nmm/module_initialize_tropical_cyclone.F	/^  2   format(i2)$/;"	l	subroutine:tcbogus	file:
 2	dyn_nmm/module_initialize_tropical_cyclone.F	/^  2   nt=nt+1$/;"	l	subroutine:posn	file:
+2	phys/jdm_08_2017_module_gen_act_disk.F	/^2 CONTINUE$/;"	l	function:calc_pitch_psu15	file:
 2	phys/module_fr_fire_util.F	/^2 format(2a,3(i5,a,i5,a),2a)$/;"	l	subroutine:write_array_m3	file:
 2	phys/module_fr_fire_util.F	/^2 format(a,2i6,2a)$/;"	l	subroutine:read_array_2d_real	file:
 2	phys/module_gen_act_disk.F	/^2 CONTINUE$/;"	l	function:calc_pitch_psu15	file:
@@ -1471,6 +1496,7 @@
 201	dyn_nmm/module_BNDRY_COND.F	/^  201 CONTINUE$/;"	l	subroutine:BOCOV	file:
 201	dyn_nmm/module_STATS_FOR_MOVE.F	/^201 format("Search for minimum PDYN (<",F10.2,") within searchrad=",F0.3,"km of domain center cx=",I0," cy=",I0)$/;"	l	subroutine:vt5_move	file:
 201	dyn_nmm/module_tracker.F	/^201    format('First guess: i=',I0,' j=',I0,' lon=',F0.2,' lat=',F0.2)$/;"	l	subroutine:ntc_impl	file:
+201	phys/jdm_08_2017_module_gen_act_disk.F	/^201 format (a18,3I6,2F12.6)$/;"	l	subroutine:gen_act_disk	file:
 201	phys/module_bl_acm.F	/^201    CONTINUE$/;"	l	subroutine:ACM2D	file:
 201	phys/module_gen_act_disk.F	/^201 format (a18,3I6,2F12.6)$/;"	l	subroutine:gen_act_disk	file:
 201	phys/module_mp_fast_sbm.F	/^  201   FORMAT(6D13.5)$/;"	l	subroutine:FAST_HUCMINIT	file:
@@ -1995,6 +2021,7 @@
 30	dyn_nmm/module_swath.F	/^30     format("Nest ",I0," middle point ",I0,",",I0," is not inside parent ", &$/;"	l	subroutine:kid_scanner	file:
 30	frame/module_bdywrite.F	/^30  format('ips=',I0,' ipe=',I0,' jps=',I0,' jpe=',I0,' kps=',I0,' kpe=',I0)$/;"	l	subroutine:bdy_write_int	file:
 30	frame/module_bdywrite.F	/^30  format('ips=',I0,' ipe=',I0,' jps=',I0,' jpe=',I0,' kps=',I0,' kpe=',I0)$/;"	l	subroutine:bdy_write_real	file:
+30	phys/NM_module_gen_act_disk.F	/^ 30       CONTINUE$/;"	l	subroutine:gen_act_disk	file:
 30	phys/module_bl_mrf.F	/^   30 CONTINUE                                                                 $/;"	l	subroutine:MRF2D	file:
 30	phys/module_cam_error_function.F	/^30 continue$/;"	l	subroutine:CALERF_r4	file:
 30	phys/module_cam_error_function.F	/^30 continue$/;"	l	subroutine:CALERF_r8	file:
@@ -14788,28 +14815,64 @@ calc_Sij_bar_hat	dyn_em/module_sfs_lasd.F	/^SUBROUTINE calc_Sij_bar_hat(/;"	s	mo
 calc_aerosol_goddard_sw	phys/module_ra_aerosol.F	/^subroutine calc_aerosol_goddard_sw(/;"	s	module:module_ra_aerosol
 calc_aerosol_rrtmg_sw	phys/module_ra_aerosol.F	/^subroutine calc_aerosol_rrtmg_sw(/;"	s	module:module_ra_aerosol
 calc_alt	dyn_em/module_big_step_utilities_em.F	/^SUBROUTINE calc_alt /;"	s	module:module_big_step_utilities_em
+calc_cd	phys/NM_module_gen_act_disk.F	/^FUNCTION calc_cd(/;"	f	module:module_gen_act_disk
+calc_cd1	phys/NM_module_gen_act_disk.F	/^FUNCTION calc_cd1(/;"	f	module:module_gen_act_disk
+calc_cd10_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cd10_psu15(/;"	f	module:module_gen_act_disk
 calc_cd10_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cd10_psu15(/;"	f	module:module_gen_act_disk
+calc_cd1_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cd1_psu15(/;"	f	module:module_gen_act_disk
 calc_cd1_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cd1_psu15(/;"	f	module:module_gen_act_disk
+calc_cd2	phys/NM_module_gen_act_disk.F	/^FUNCTION calc_cd2(/;"	f	module:module_gen_act_disk
+calc_cd2_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cd2_psu15(/;"	f	module:module_gen_act_disk
 calc_cd2_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cd2_psu15(/;"	f	module:module_gen_act_disk
+calc_cd3	phys/NM_module_gen_act_disk.F	/^FUNCTION calc_cd3(/;"	f	module:module_gen_act_disk
+calc_cd3_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cd3_psu15(/;"	f	module:module_gen_act_disk
 calc_cd3_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cd3_psu15(/;"	f	module:module_gen_act_disk
+calc_cd4	phys/NM_module_gen_act_disk.F	/^FUNCTION calc_cd4(/;"	f	module:module_gen_act_disk
+calc_cd4_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cd4_psu15(/;"	f	module:module_gen_act_disk
 calc_cd4_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cd4_psu15(/;"	f	module:module_gen_act_disk
+calc_cd5	phys/NM_module_gen_act_disk.F	/^FUNCTION calc_cd5(/;"	f	module:module_gen_act_disk
+calc_cd5_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cd5_psu15(/;"	f	module:module_gen_act_disk
 calc_cd5_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cd5_psu15(/;"	f	module:module_gen_act_disk
+calc_cd6_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cd6_psu15(/;"	f	module:module_gen_act_disk
 calc_cd6_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cd6_psu15(/;"	f	module:module_gen_act_disk
+calc_cd7_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cd7_psu15(/;"	f	module:module_gen_act_disk
 calc_cd7_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cd7_psu15(/;"	f	module:module_gen_act_disk
+calc_cd8_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cd8_psu15(/;"	f	module:module_gen_act_disk
 calc_cd8_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cd8_psu15(/;"	f	module:module_gen_act_disk
+calc_cd9_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cd9_psu15(/;"	f	module:module_gen_act_disk
 calc_cd9_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cd9_psu15(/;"	f	module:module_gen_act_disk
+calc_cd_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cd_psu15(/;"	f	module:module_gen_act_disk
 calc_cd_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cd_psu15(/;"	f	module:module_gen_act_disk
+calc_chord	phys/NM_module_gen_act_disk.F	/^FUNCTION calc_chord(/;"	f	module:module_gen_act_disk
+calc_chord_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_chord_psu15(/;"	f	module:module_gen_act_disk
 calc_chord_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_chord_psu15(/;"	f	module:module_gen_act_disk
+calc_cl	phys/NM_module_gen_act_disk.F	/^FUNCTION calc_cl(/;"	f	module:module_gen_act_disk
+calc_cl1	phys/NM_module_gen_act_disk.F	/^FUNCTION calc_cl1(/;"	f	module:module_gen_act_disk
+calc_cl10_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cl10_psu15(/;"	f	module:module_gen_act_disk
 calc_cl10_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cl10_psu15(/;"	f	module:module_gen_act_disk
+calc_cl1_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cl1_psu15(/;"	f	module:module_gen_act_disk
 calc_cl1_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cl1_psu15(/;"	f	module:module_gen_act_disk
+calc_cl2	phys/NM_module_gen_act_disk.F	/^FUNCTION calc_cl2(/;"	f	module:module_gen_act_disk
+calc_cl2_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cl2_psu15(/;"	f	module:module_gen_act_disk
 calc_cl2_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cl2_psu15(/;"	f	module:module_gen_act_disk
+calc_cl3	phys/NM_module_gen_act_disk.F	/^FUNCTION calc_cl3(/;"	f	module:module_gen_act_disk
+calc_cl3_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cl3_psu15(/;"	f	module:module_gen_act_disk
 calc_cl3_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cl3_psu15(/;"	f	module:module_gen_act_disk
+calc_cl4	phys/NM_module_gen_act_disk.F	/^FUNCTION calc_cl4(/;"	f	module:module_gen_act_disk
+calc_cl4_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cl4_psu15(/;"	f	module:module_gen_act_disk
 calc_cl4_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cl4_psu15(/;"	f	module:module_gen_act_disk
+calc_cl5	phys/NM_module_gen_act_disk.F	/^FUNCTION calc_cl5(/;"	f	module:module_gen_act_disk
+calc_cl5_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cl5_psu15(/;"	f	module:module_gen_act_disk
 calc_cl5_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cl5_psu15(/;"	f	module:module_gen_act_disk
+calc_cl6_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cl6_psu15(/;"	f	module:module_gen_act_disk
 calc_cl6_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cl6_psu15(/;"	f	module:module_gen_act_disk
+calc_cl7_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cl7_psu15(/;"	f	module:module_gen_act_disk
 calc_cl7_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cl7_psu15(/;"	f	module:module_gen_act_disk
+calc_cl8_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cl8_psu15(/;"	f	module:module_gen_act_disk
 calc_cl8_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cl8_psu15(/;"	f	module:module_gen_act_disk
+calc_cl9_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cl9_psu15(/;"	f	module:module_gen_act_disk
 calc_cl9_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cl9_psu15(/;"	f	module:module_gen_act_disk
+calc_cl_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_cl_psu15(/;"	f	module:module_gen_act_disk
 calc_cl_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_cl_psu15(/;"	f	module:module_gen_act_disk
 calc_coef_w	dyn_em/module_small_step_em.F	/^SUBROUTINE calc_coef_w(/;"	s	module:module_small_step_em
 calc_contraction	DYN_CODES_FOR_BOBBY/jdm_092717_module_sfs_lasd.F	/^SUBROUTINE calc_contraction /;"	s	module:module_sfs_lasd
@@ -14817,7 +14880,11 @@ calc_contraction	dyn_em/module_sfs_lasd.F	/^SUBROUTINE calc_contraction /;"	s	mo
 calc_coszen	phys/module_radiation_driver.F	/^   SUBROUTINE calc_coszen(/;"	s	module:module_radiation_driver
 calc_cq	dyn_em/module_big_step_utilities_em.F	/^SUBROUTINE calc_cq /;"	s	module:module_big_step_utilities_em
 calc_current_date	share/module_date_time.F	/^   SUBROUTINE calc_current_date /;"	s	module:module_date_time
+calc_distance	phys/NM_module_gen_act_disk.F	/^SUBROUTINE calc_distance(/;"	s	module:module_gen_act_disk
+calc_distance	phys/jdm_08_2017_module_gen_act_disk.F	/^SUBROUTINE calc_distance(/;"	s	module:module_gen_act_disk
 calc_distance	phys/module_gen_act_disk.F	/^SUBROUTINE calc_distance(/;"	s	module:module_gen_act_disk
+calc_distline	phys/NM_module_gen_act_disk.F	/^FUNCTION calc_distline(/;"	f	module:module_gen_act_disk
+calc_distline	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_distline(/;"	f	module:module_gen_act_disk
 calc_distline	phys/module_gen_act_disk.F	/^FUNCTION calc_distline(/;"	f	module:module_gen_act_disk
 calc_dt	dyn_em/adapt_timestep_em.F	/^SUBROUTINE calc_dt(/;"	s
 calc_eff_radius	phys/module_mp_nssl_2mom.F	/^   SUBROUTINE calc_eff_radius /;"	s	module:module_mp_nssl_2mom
@@ -14826,6 +14893,8 @@ calc_es	phys/module_diag_afwa.F	/^  FUNCTION calc_es /;"	f	module:diag_functions
 calc_ev_lasd	DYN_CODES_FOR_BOBBY/jdm_092717_module_sfs_lasd.F	/^SUBROUTINE calc_ev_lasd(/;"	s	module:module_sfs_lasd
 calc_ev_lasd	dyn_em/module_sfs_lasd.F	/^SUBROUTINE calc_ev_lasd(/;"	s	module:module_sfs_lasd
 calc_fits	phys/module_diag_afwa.F	/^  FUNCTION calc_fits /;"	f	module:diag_functions
+calc_fnft	phys/NM_module_gen_act_disk.F	/^FUNCTION calc_fnft(/;"	f	module:module_gen_act_disk
+calc_fnft_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_fnft_psu15(/;"	f	module:module_gen_act_disk
 calc_fnft_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_fnft_psu15(/;"	f	module:module_gen_act_disk
 calc_half_sij_c	DYN_CODES_FOR_BOBBY/jdm_092717_module_sfs_lasd.F	/^SUBROUTINE calc_half_sij_c /;"	s	module:module_sfs_lasd
 calc_half_sij_c	dyn_em/module_sfs_lasd.F	/^SUBROUTINE calc_half_sij_c /;"	s	module:module_sfs_lasd
@@ -14855,11 +14924,15 @@ calc_pert_t	dyn_em/jdm_11_08_2017_module_stoch_les_inflow_perts.F	/^    SUBROUTI
 calc_pert_t	dyn_em/module_stoch_les_inflow_perts.F	/^    SUBROUTINE calc_pert_t(/;"	s	module:module_stoch_les_inflow_perts
 calc_pert_uv	dyn_em/module_stoch_les_inflow_perts.F	/^    SUBROUTINE calc_pert_uv(/;"	s	module:module_stoch_les_inflow_perts
 calc_php	dyn_em/module_big_step_utilities_em.F	/^SUBROUTINE calc_php /;"	s	module:module_big_step_utilities_em
+calc_pitch	phys/NM_module_gen_act_disk.F	/^FUNCTION calc_pitch(/;"	f	module:module_gen_act_disk
+calc_pitch_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_pitch_psu15(/;"	f	module:module_gen_act_disk
 calc_pitch_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_pitch_psu15(/;"	f	module:module_gen_act_disk
 calc_rcouple_scales	phys/module_fddaobs_rtfdda.F	/^  SUBROUTINE calc_rcouple_scales(/;"	s	module:module_fddaobs_rtfdda
 calc_refl10cm	phys/module_mp_thompson.F	/^      subroutine calc_refl10cm /;"	s	module:module_mp_thompson
 calc_relative_humidity	phys/module_ra_aerosol.F	/^subroutine calc_relative_humidity(/;"	s	module:module_ra_aerosol
 calc_rh	phys/module_diag_afwa.F	/^  FUNCTION calc_rh /;"	f	module:diag_functions
+calc_rpm	phys/NM_module_gen_act_disk.F	/^FUNCTION calc_rpm(/;"	f	module:module_gen_act_disk
+calc_rpm_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_rpm_psu15(/;"	f	module:module_gen_act_disk
 calc_rpm_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_rpm_psu15(/;"	f	module:module_gen_act_disk
 calc_s_sij	DYN_CODES_FOR_BOBBY/jdm_092717_module_sfs_lasd.F	/^SUBROUTINE calc_s_sij(/;"	s	module:module_sfs_lasd
 calc_s_sij	dyn_em/module_sfs_lasd.F	/^SUBROUTINE calc_s_sij(/;"	s	module:module_sfs_lasd
@@ -14879,9 +14952,13 @@ calc_tornado_genesis	dyn_nmm/module_tornado_genesis.F	/^  subroutine calc_tornad
 calc_track_locations	share/track_driver.F	/^SUBROUTINE calc_track_locations(/;"	s
 calc_ts	share/wrf_timeseries.F	/^SUBROUTINE calc_ts(/;"	s
 calc_ts_locations	share/wrf_timeseries.F	/^SUBROUTINE calc_ts_locations(/;"	s
+calc_twist	phys/NM_module_gen_act_disk.F	/^FUNCTION calc_twist(/;"	f	module:module_gen_act_disk
+calc_twist_psu15	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_twist_psu15(/;"	f	module:module_gen_act_disk
 calc_twist_psu15	phys/module_gen_act_disk.F	/^FUNCTION calc_twist_psu15(/;"	f	module:module_gen_act_disk
 calc_wc	phys/module_diag_afwa.F	/^  FUNCTION calc_wc /;"	f	module:diag_functions
 calc_ww_cp	dyn_em/module_big_step_utilities_em.F	/^SUBROUTINE calc_ww_cp /;"	s	module:module_big_step_utilities_em
+calc_yprime	phys/NM_module_gen_act_disk.F	/^FUNCTION calc_yprime(/;"	f	module:module_gen_act_disk
+calc_yprime	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION calc_yprime(/;"	f	module:module_gen_act_disk
 calc_yprime	phys/module_gen_act_disk.F	/^FUNCTION calc_yprime(/;"	f	module:module_gen_act_disk
 calcdist	dyn_nmm/module_tracker.F	/^  subroutine calcdist(/;"	s
 calclpi	phys/module_ltng_lpi.F	/^  SUBROUTINE calclpi(/;"	s	module:module_ltng_lpi
@@ -15180,6 +15257,8 @@ check_landreal2d	hydro/MPP/mpp_land.F	/^     subroutine check_landreal2d(/;"	s	m
 check_landreal3d	hydro/MPP/mpp_land.F	/^     subroutine check_landreal3d(/;"	s	module:MODULE_MPP_LAND
 check_mesh_2dim	phys/module_fr_fire_util.F	/^subroutine check_mesh_2dim(/;"	s	module:module_fr_fire_util
 check_mesh_3dim	phys/module_fr_fire_util.F	/^subroutine check_mesh_3dim(/;"	s	module:module_fr_fire_util
+check_naninf	phys/NM_module_gen_act_disk.F	/^FUNCTION check_naninf(/;"	f	module:module_gen_act_disk
+check_naninf	phys/jdm_08_2017_module_gen_act_disk.F	/^FUNCTION check_naninf(/;"	f	module:module_gen_act_disk
 check_naninf	phys/module_gen_act_disk.F	/^FUNCTION check_naninf(/;"	f	module:module_gen_act_disk
 check_nml_consistency	share/module_check_a_mundo.F	/^   SUBROUTINE  check_nml_consistency$/;"	s	module:module_check_a_mundo
 check_values	phys/module_mp_milbrandt2mom.F	/^ subroutine check_values(/;"	s	module:my2_mod
@@ -17633,6 +17712,8 @@ first_operation	frame/module_io.F	/^  LOGICAL :: for_output(MAX_WRF_IO_HANDLE), 
 first_rk_step_part1	dyn_em/module_first_rk_step_part1.F	/^  SUBROUTINE first_rk_step_part1 /;"	s	module:module_first_rk_step_part1
 first_rk_step_part2	CODES_FOR_RAJ/jdm_5_10_2018_dyn_em_module_first_rk_step_part2.F	/^  SUBROUTINE first_rk_step_part2 /;"	s	module:module_first_rk_step_part2
 first_rk_step_part2	DYN_CODES_FOR_BOBBY/jdm_092717_module_first_rk_step_part2.F	/^  SUBROUTINE first_rk_step_part2 /;"	s	module:module_first_rk_step_part2
+first_rk_step_part2	dyn_em/NM_module_first_rk_step_part2.F	/^  SUBROUTINE first_rk_step_part2 /;"	s	module:module_first_rk_step_part2
+first_rk_step_part2	dyn_em/jdm_08_2017_module_first_rk_step_part2.F	/^  SUBROUTINE first_rk_step_part2 /;"	s	module:module_first_rk_step_part2
 first_rk_step_part2	dyn_em/jdm_dyn_em_module_first_rk_step_part2.F	/^  SUBROUTINE first_rk_step_part2 /;"	s	module:module_first_rk_step_part2
 first_rk_step_part2	dyn_em/module_first_rk_step_part2.F	/^  SUBROUTINE first_rk_step_part2 /;"	s	module:module_first_rk_step_part2
 first_stream	frame/module_streams.F	/^  INTEGER, PARAMETER :: first_stream /;"	v	module:module_streams
@@ -18351,6 +18432,8 @@ gdt_len	external/io_grib2/g2lib/g2grids.F	/^          integer :: gdt_len$/;"	k	t
 gdt_num	external/io_grib2/g2lib/g2grids.F	/^          integer :: gdt_num$/;"	k	type:g2grid
 gebal	phys/module_sf_clm.F	/^   type(energy_balance_type)   :: gebal /;"	k	type:gridcell_type
 gef	phys/module_sf_clm.F	/^   type(gridcell_eflux_type) :: gef /;"	k	type:gridcell_type
+gen_act_disk	phys/NM_module_gen_act_disk.F	/^  SUBROUTINE gen_act_disk /;"	s	module:module_gen_act_disk
+gen_act_disk	phys/jdm_08_2017_module_gen_act_disk.F	/^  SUBROUTINE gen_act_disk /;"	s	module:module_gen_act_disk
 gen_act_disk	phys/module_gen_act_disk.F	/^  SUBROUTINE gen_act_disk /;"	s	module:module_gen_act_disk
 gen_actual_args	tools/gen_args.c	/^gen_actual_args ( char * dirname )$/;"	f
 gen_actual_args_new	tools/gen_args.c	/^gen_actual_args_new ( char * dirname )$/;"	f
@@ -18445,7 +18528,8 @@ gen_wrf_io	tools/gen_wrf_io.c	/^gen_wrf_io ( char * dirname )$/;"	f
 gen_wrf_io2	tools/gen_wrf_io.c	/^gen_wrf_io2 ( FILE * fp , char * fname, char * structname , char * fourdname, node_t * node , int sw_io )$/;"	f
 gen_xposes	external/RSL_LITE/gen_comms.c	/^gen_xposes ( char * dirname )$/;"	f
 gen_xposes	tools/gen_comms.c	/^gen_xposes ( char * dirname )$/;"	f
-genactdisk	frame/module_state_description.F	/^  INTEGER, PARAMETER :: genactdisk /;"	v	module:module_state_description
+genactdisk2	frame/module_state_description.F	/^  INTEGER, PARAMETER :: genactdisk2 /;"	v	module:module_state_description
+genactdisk3	frame/module_state_description.F	/^  INTEGER, PARAMETER :: genactdisk3 /;"	v	module:module_state_description
 generate_stochastic_clouds	phys/module_ra_rrtmg_lw.F	/^      subroutine generate_stochastic_clouds(/;"	s	module:mcica_subcol_gen_lw
 generate_stochastic_clouds_sw	phys/module_ra_rrtmg_sw.F	/^      subroutine generate_stochastic_clouds_sw(/;"	s	module:mcica_subcol_gen_sw
 geom_defn	external/io_grib1/MEL_grib1/grib_lookup.h	/^typedef struct geom_defn {   \/***  GEOM :   Grib vs. Neons ****\/$/;"	s
@@ -22271,6 +22355,8 @@ module_fddaobs_rtfdda	phys/module_fddaobs_rtfdda.F	/^MODULE module_fddaobs_rtfdd
 module_first_rk_step_part1	dyn_em/module_first_rk_step_part1.F	/^MODULE module_first_rk_step_part1$/;"	m
 module_first_rk_step_part2	CODES_FOR_RAJ/jdm_5_10_2018_dyn_em_module_first_rk_step_part2.F	/^MODULE module_first_rk_step_part2$/;"	m
 module_first_rk_step_part2	DYN_CODES_FOR_BOBBY/jdm_092717_module_first_rk_step_part2.F	/^MODULE module_first_rk_step_part2$/;"	m
+module_first_rk_step_part2	dyn_em/NM_module_first_rk_step_part2.F	/^MODULE module_first_rk_step_part2$/;"	m
+module_first_rk_step_part2	dyn_em/jdm_08_2017_module_first_rk_step_part2.F	/^MODULE module_first_rk_step_part2$/;"	m
 module_first_rk_step_part2	dyn_em/jdm_dyn_em_module_first_rk_step_part2.F	/^MODULE module_first_rk_step_part2$/;"	m
 module_first_rk_step_part2	dyn_em/module_first_rk_step_part2.F	/^MODULE module_first_rk_step_part2$/;"	m
 module_force_scm	dyn_em/module_force_scm.F	/^MODULE module_force_scm$/;"	m
@@ -22281,6 +22367,8 @@ module_fr_fire_driver_wrf	phys/module_fr_fire_driver_wrf.F	/^module module_fr_fi
 module_fr_fire_model	phys/module_fr_fire_model.F	/^module module_fr_fire_model$/;"	m
 module_fr_fire_phys	phys/module_fr_fire_phys.F	/^module module_fr_fire_phys$/;"	m
 module_fr_fire_util	phys/module_fr_fire_util.F	/^module module_fr_fire_util$/;"	m
+module_gen_act_disk	phys/NM_module_gen_act_disk.F	/^MODULE module_gen_act_disk$/;"	m
+module_gen_act_disk	phys/jdm_08_2017_module_gen_act_disk.F	/^MODULE module_gen_act_disk$/;"	m
 module_gen_act_disk	phys/module_gen_act_disk.F	/^MODULE module_gen_act_disk$/;"	m
 module_get_file_names	share/module_get_file_names.F	/^MODULE module_get_file_names$/;"	m
 module_gfs_funcphys	phys/module_gfs_funcphys.F	/^module module_gfs_funcphys$/;"	m
@@ -22442,6 +22530,8 @@ module_tornado_genesis	dyn_nmm/module_tornado_genesis.F	/^module module_tornado_
 module_tracker	dyn_nmm/module_tracker.F	/^module module_tracker$/;"	m
 module_tsout	dyn_em/module_tsout.F	/^MODULE module_tsout$/;"	m
 module_wind_fitch	phys/module_wind_fitch.F	/^MODULE module_wind_fitch$/;"	m
+module_wind_param_driver	phys/NM_module_wind_param_driver.F	/^MODULE module_wind_param_driver$/;"	m
+module_wind_param_driver	phys/jdm_08_2017_module_wind_param_driver.F	/^MODULE module_wind_param_driver$/;"	m
 module_wind_param_driver	phys/module_wind_param_driver.F	/^MODULE module_wind_param_driver$/;"	m
 module_wps_io_arw	dyn_em/module_wps_io_arw.F	/^MODULE module_wps_io_arw$/;"	m
 module_wrf_component_top	main/wrf_ESMFMod.F	/^MODULE module_wrf_component_top$/;"	m
@@ -24180,6 +24270,8 @@ physics_ptend_init	phys/module_mp_cammgmp_driver.F	/^  subroutine physics_ptend_
 physics_ptend_reset	phys/module_mp_cammgmp_driver.F	/^  subroutine physics_ptend_reset(/;"	s	module:module_mp_cammgmp_driver
 physics_ptend_sum	phys/module_mp_cammgmp_driver.F	/^  subroutine physics_ptend_sum(/;"	s	module:module_mp_cammgmp_driver
 physics_update	phys/module_mp_cammgmp_driver.F	/^  subroutine physics_update(/;"	s	module:module_mp_cammgmp_driver
+pi	phys/NM_module_gen_act_disk.F	/^  real, parameter :: pi=/;"	v	module:module_gen_act_disk
+pi	phys/jdm_08_2017_module_gen_act_disk.F	/^  real, parameter :: pi=/;"	v	module:module_gen_act_disk
 pi	phys/module_gen_act_disk.F	/^  real, parameter :: pi=/;"	v	module:module_gen_act_disk
 pi	phys/module_mp_nssl_2mom.F	/^      real, parameter :: pi /;"	v	module:module_mp_nssl_2mom
 pi	phys/module_ra_rrtmg_lw.F	/^      real(kind=rb) :: oneminus, pi,/;"	v	module:rrlw_con
@@ -27787,6 +27879,8 @@ wimp	phys/module_sf_lake.F	/^    real(r8), parameter :: wimp /;"	v	module:module
 wind_adjust	dyn_nmm/module_initialize_real.F	/^  SUBROUTINE wind_adjust(/;"	s	module:module_initialize_real
 wind_adjust	dyn_nmm/module_initialize_tropical_cyclone.F	/^  SUBROUTINE wind_adjust(/;"	s	module:module_initialize_ideal
 wind_hgt_canyon	phys/module_sf_clm.F	/^   real(r8), pointer :: wind_hgt_canyon(/;"	k	type:landunit_type
+wind_param_driver	phys/NM_module_wind_param_driver.F	/^SUBROUTINE wind_param_driver(/;"	s	module:module_wind_param_driver
+wind_param_driver	phys/jdm_08_2017_module_wind_param_driver.F	/^SUBROUTINE wind_param_driver(/;"	s	module:module_wind_param_driver
 wind_param_driver	phys/module_wind_param_driver.F	/^SUBROUTINE wind_param_driver(/;"	s	module:module_wind_param_driver
 wind_red	phys/module_fr_fire_core.F	/^        stop_time, &    ! when the ignition process stops from ignition start (s)$/;"	k	type:ignition_line_type
 windowsize	MESO_TENDS_CODES_FROM_JAVIER/tendencies3.py	/^windowsize = np.array([3,21,121])   # number of (dtmeso) timesteps$/;"	v
