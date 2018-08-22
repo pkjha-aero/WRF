@@ -1,0 +1,433 @@
+! Arrays for NBA model-----------------------------------------------------
+
+state	real	-	ikjf	nba_mij		1       -       -       -
+state   real    m11     ikjf    nba_mij		1       -	h	"m11"   	"11 component of NBA subgrid stress tensor"     "m2 s-2"
+state   real    m22     ikjf    nba_mij		1       -       h       "m22"   	"22 component of NBA subgrid stress tensor"     "m2 s-2"
+state   real    m33     ikjf    nba_mij		1       -       h       "m33"   	"33 component of NBA subgrid stress tensor"     "m2 s-2"
+state   real    m12     ikjf    nba_mij		1       -       h       "m12"   	"12 component of NBA subgrid stress tensor"     "m2 s-2"
+state   real    m13     ikjf    nba_mij		1       -       h       "m13"   	"13 component of NBA subgrid stress tensor"     "m2 s-2"
+state   real    m23     ikjf    nba_mij		1       -       h       "m23"  		"23 component of NBA subgrid stress tensor"     "m2 s-2"
+state   real    mh1     ikjf    nba_mij		1       -       h       "mh1"  		"zonal heat flux (not from NBA model)     "     "K m s-1"
+state   real    mh2     ikjf    nba_mij		1       -       h       "mh2"  		"meridional heat flux (not from NBA model)"     "K m s-1"
+state   real    mh3     ikjf    nba_mij		1       -       h       "mh3"  		"vertical heat flux (not from NBA model)  "     "K m s-1"
+state   real    mq1     ikjf    nba_mij		1       -       h       "mq1"  		"zonal vapor flux (not from NBA model)    "     "m s-1"
+state   real    mq2     ikjf    nba_mij		1       -       h       "mq2"  		"meridional vapor flux (not from NBA model)"    "m s-1"
+state   real    mq3     ikjf    nba_mij		1       -       h       "mq3"  		"vertical vapor flux (not from NBA model) "     "m s-1"
+
+state   real    -       ikjf    nba_rij		1       -       -       -	
+state   real    r12     ikjf    nba_rij		1       -       -       "r12"   	"12 component of rotation tensor"               "s-1"
+state   real    r13     ikjf    nba_rij		1       -       -       "r13"   	"13 component of rotation tensor"               "s-1"
+state   real    r23     ikjf    nba_rij		1       -       -       "r23"   	"23 component of rotation tensor"               "s-1"
+state   real    r12_cc  ikjf    nba_rij		1       -       -       "r12_cc"   	"r23 computed at the cell center"               "s-1"
+state   real    r13_cc  ikjf    nba_rij		1       -       -       "r13_cc"   	"r23 computed at the cell center"               "s-1"
+state   real    r23_cc  ikjf    nba_rij		1       -       -       "r23_cc"   	"r23 computed at the cell center"               "s-1"
+state   real    smnsmn  ikjf    nba_rij		1       -       -       "smnsmn"   	"Smn*Smn"               			"s-2"
+
+! Arrays for LASD model--------------------------------------------------------------
+
+state	real	-	ikjf     lasd_uvw_bar_hat	1       -       -       -
+state   real    ubar    ikjf     lasd_uvw_bar_hat	1       -	-	"ubar"   	"test filtered u"          "m s-1"
+state   real    vbar    ikjf     lasd_uvw_bar_hat	1       -       -       "vbar"   	"test filtered u"          "m s-1"
+state   real    wbar    ikjf     lasd_uvw_bar_hat	1       -       -       "wbar"   	"test filtered u"          "m s-1"
+state   real    uhat    ikjf     lasd_uvw_bar_hat	1       -       -       "uhat"   	"test test filtered u"     "m s-1"
+state   real    vhat    ikjf     lasd_uvw_bar_hat	1       -       -       "vhat"   	"test test filtered u"     "m s-1"
+state   real    what    ikjf     lasd_uvw_bar_hat	1       -       -       "what"  	"test test filtered u"     "m s-1"
+
+state	real	-	ikjf	 lasd_s_bar_hat		1       -       -       -
+state   real    s11bar  ikjf     lasd_s_bar_hat		1       -	-	"s11bar"   	"11 component of Sij_filt"       "m s-1"
+state   real    s22bar  ikjf     lasd_s_bar_hat		1       -       -       "s22bar"   	"22 component of Sij_filt"       "m s-1"
+state   real    s33bar  ikjf     lasd_s_bar_hat		1       -       -       "s33bar"   	"33 component of Sij_filt"       "m s-1"
+state   real    s12bar  ikjf     lasd_s_bar_hat		1       -       -       "s12bar"   	"12 component of Sij_filt"       "m s-1"
+state   real    s13bar  ikjf     lasd_s_bar_hat		1       -       -       "s13bar"   	"13 component of Sij_filt"       "m s-1"
+state   real    s23bar  ikjf     lasd_s_bar_hat		1       -       -       "s23bar"  	"23 component of Sij_filt"       "m s-1"
+state   real    s11hat  ikjf     lasd_s_bar_hat		1       -	-	"s11hat"   	"11 component of Sij_filt_filt"  "m s-1"
+state   real    s22hat  ikjf     lasd_s_bar_hat		1       -       -       "s22hat"   	"22 component of Sij_filt_filt"  "m s-1"
+state   real    s33hat  ikjf     lasd_s_bar_hat		1       -       -       "s33hat"   	"33 component of Sij_filt_filt"  "m s-1"
+state   real    s12hat  ikjf     lasd_s_bar_hat		1       -       -       "s12hat"   	"12 component of Sij_filt_filt"  "m s-1"
+state   real    s13hat  ikjf     lasd_s_bar_hat		1       -       -       "s13hat"   	"13 component of Sij_filt_filt"  "m s-1"
+state   real    s23hat  ikjf     lasd_s_bar_hat		1       -       -       "s23hat"  	"23 component of Sij_filt_filt"  "m s-1"
+
+state	real	-	ikjf	 lasd_Sij		1       -       -       -
+state   real    S11     ikjf     lasd_Sij		1       -	-	"S11"   	"11 component of Sij"      "m s-1"
+state   real    S22     ikjf     lasd_Sij		1       -       -       "S22"   	"22 component of Sij"      "m s-1"
+state   real    S33     ikjf     lasd_Sij		1       -       -       "S33"   	"33 component of Sij"      "m s-1"
+state   real    S12     ikjf     lasd_Sij		1       -       -       "S12"   	"12 component of Sij"      "m s-1"
+state   real    S13     ikjf     lasd_Sij		1       -       -       "S13"   	"13 component of Sij"      "m s-1"
+state   real    S23     ikjf     lasd_Sij		1       -       -       "S23"   	"23 component of Sij"      "m s-1"
+
+state	real	-	ikjf	 lasd_Lij		1       -       -       -
+state   real    L11     ikjf     lasd_Lij		1       -	-	"L11"   	"11 component of Lij"      "m2 s-2"
+state   real    L22     ikjf     lasd_Lij		1       -       -       "L22"   	"22 component of Lij"      "m2 s-2"
+state   real    L33     ikjf     lasd_Lij		1       -       -       "L33"   	"33 component of Lij"      "m2 s-2"
+state   real    L12     ikjf     lasd_Lij		1       -       -       "L12"   	"12 component of Lij"      "m2 s-2"
+state   real    L13     ikjf     lasd_Lij		1       -       -       "L13"   	"13 component of Lij"      "m2 s-2"
+state   real    L23     ikjf     lasd_Lij		1       -       -       "L23"   	"23 component of Lij"      "m2 s-2"
+
+state	real	-	ikjf	 lasd_Qij		1       -       -       -
+state   real    Q11     ikjf     lasd_Qij		1       -	-	"Q11"   	"11 component of Qij"      "m2 s-2"
+state   real    Q22     ikjf     lasd_Qij		1       -       -       "Q22"   	"22 component of Qij"      "m2 s-2"
+state   real    Q33     ikjf     lasd_Qij		1       -       -       "Q33"   	"33 component of Qij"      "m2 s-2"
+state   real    Q12     ikjf     lasd_Qij		1       -       -       "Q12"   	"12 component of Qij"      "m2 s-2"
+state   real    Q13     ikjf     lasd_Qij		1       -       -       "Q13"   	"13 component of Qij"      "m2 s-2"
+state   real    Q23     ikjf     lasd_Qij		1       -       -       "Q23"   	"23 component of Qij"      "m2 s-2"
+
+state	real	-	ikjf	 lasd_Gij		1       -       -       -
+state   real    G11     ikjf     lasd_Gij		1       -	-	"G11"   	"11 component of Gij"      "m2 s-2"
+state   real    G22     ikjf     lasd_Gij		1       -       -       "G22"   	"22 component of Gij"      "m2 s-2"
+state   real    G33     ikjf     lasd_Gij		1       -       -       "G33"   	"33 component of Gij"      "m2 s-2"
+state   real    G12     ikjf     lasd_Gij		1       -       -       "G12"   	"12 component of Gij"      "m2 s-2"
+state   real    G13     ikjf     lasd_Gij		1       -       -       "G13"   	"13 component of Gij"      "m2 s-2"
+state   real    G23     ikjf     lasd_Gij		1       -       -       "G23"   	"23 component of Gij"      "m2 s-2"
+
+state	real	-	ikjf     lasd_Nij		1       -       -       -
+state   real    N11     ikjf     lasd_Nij		1       -	-	"N11"   	"11 component of Nij"      "m2 s-2"
+state   real    N22     ikjf     lasd_Nij		1       -       -       "N22"   	"22 component of Nij"      "m2 s-2"
+state   real    N33     ikjf     lasd_Nij		1       -       -       "N33"   	"33 component of Nij"      "m2 s-2"
+state   real    N12     ikjf     lasd_Nij		1       -       -       "N12"   	"12 component of Nij"      "m2 s-2"
+state   real    N13     ikjf     lasd_Nij		1       -       -       "N13"   	"13 component of Nij"      "m2 s-2"
+state   real    N23     ikjf     lasd_Nij		1       -       -       "N23"   	"23 component of Nij"      "m2 s-2"
+
+state	real	-	ikjf	 lasd_TC			1       -       -       -
+state   real    CS      ikjf     lasd_TC			1       -	-	"CS"    	"CS"                       "m2 s-2"
+state   real    SS      ikjf     lasd_TC			1       -	-	"SS"    	"|S|"                      "m2 s-2"
+state   real    SS_BAR  ikjf     lasd_TC			1       -	-	"SS_BAR"   	"test filtered |S|"        "m2 s-2"
+state   real    SS_HAT  ikjf     lasd_TC			1       -	-	"SS_HAT"   	"test test filtered |S|"   "m2 s-2"
+state   real    LG      ikjf     lasd_TC			1       -       -       "LG"    	"LG"		           "m4 s-4"
+state   real    GG      ikjf     lasd_TC			1       -       -       "GG"    	"GG"                       "m4 s-4"
+state   real    QN     	ikjf     lasd_TC			1       -       -       "QN"    	"QN"                       "m4 s-4"
+state   real    NN   	ikjf     lasd_TC			1       -       -       "NN"    	"NN"                       "m4 s-4"
+state   real    FF_LG   ikjf     lasd_TC			1       -       -       "FF_LG"    	"FF_LG"		           "m4 s-4"
+state   real    FF_GG   ikjf     lasd_TC			1       -       -       "FF_GG"    	"FF_GG"                    "m4 s-4"
+state   real    FF_QN   ikjf     lasd_TC			1       -       -       "FF_QN"    	"FF_QN"                    "m4 s-4"
+state   real    FF_NN   ikjf     lasd_TC			1       -       -       "FF_NN"    	"FF_NN"                    "m4 s-4"
+
+state	real	-	ikjf	 lasd_LAGR			1       -       -       -
+state   real    F_LG    ikjf     lasd_LAGR			1       -       r       "F_LG"    	"F_LG"		           "m4 s-4"
+state   real    F_GG    ikjf     lasd_LAGR			1       -       r       "F_GG"    	"F_GG"                     "m4 s-4"
+state   real    F_QN    ikjf     lasd_LAGR			1       -       r       "F_QN"    	"F_QN"                     "m4 s-4"
+state   real    F_NN   	ikjf     lasd_LAGR			1       -       r       "F_NN"    	"F_NN"                     "m4 s-4"
+
+! Arrays for RSFS model-----------------------------------------------------
+    
+state   real    -       ikjf     rsfs_rec	1       -       -       -
+state   real    urec    ikjf     rsfs_rec	1       -       -       "urec"  	"reconstructed u-velocity"               	"m s-1"
+state   real    vrec    ikjf     rsfs_rec	1       -       -       "vrec"  	"reconstructed v-velocity"               	"m s-1"
+state   real    wrec    ikjf     rsfs_rec	1       -       -       "wrec"  	"reconstructed w-velocity"               	"m s-1"
+state   real    trec    ikjf     rsfs_rec	1       -       -       "trec"  	"reconstructed potential temperature"          	"K"
+state   real    qrec    ikjf     rsfs_rec	1       -       -       "qrec"  	"reconstructed vapor"          			""
+
+state   real    -       ikjf   	 rsfs_prec	1       -       -       -
+state   real    urecc   ikjf   	 rsfs_prec	1       -       -  	"urecc"		"urec projected to c nodes"			"m s-1"
+state   real    vrecc   ikjf   	 rsfs_prec      1       -       -  	"vrecc" 	"vrec projected to c nodes"			"m s-1"
+state   real    wrecc   ikjf   	 rsfs_prec      1       -       -  	"wrecc" 	"wrec projected to c nodes"			"m s-1"
+state   real    urecd   ikjf   	 rsfs_prec      1       -       -  	"urecd" 	"urec projected to d nodes"			"m s-1"
+state   real    vrecd   ikjf   	 rsfs_prec      1       -       -	"vrecd" 	"vrec projected to d nodes"			"m s-1"
+state   real    urece   ikjf   	 rsfs_prec      1       -       -  	"urece" 	"urec projected to e nodes"			"m s-1"
+state   real    wrece   ikjf   	 rsfs_prec      1       -       -	"wrece" 	"wrec projected to e nodes"			"m s-1"
+state   real    vrecf   ikjf   	 rsfs_prec      1       -       -	"vrecf" 	"urec projected to f nodes"			"m s-1"
+state   real    wrecf   ikjf   	 rsfs_prec      1       -       -	"wrecf" 	"wrec projected to f nodes"			"m s-1"
+state   real    uurecc  ikjf   	 rsfs_prec      1       -       -	"uurecc"	"urecc*urecc"					"m2 s-2"
+state   real    vvrecc  ikjf   	 rsfs_prec      1       -       -	"vvrecc"	"vrecc*vrecc"					"m2 s-2"
+state   real    wwrecc  ikjf   	 rsfs_prec      1       -       -	"wwrecc"	"wrecc*wrecc"					"m2 s-2"
+state   real    uvrecd  ikjf   	 rsfs_prec      1       -       -	"uvrecd"	"urecd*vrecd"					"m2 s-2"
+state   real    uwrece  ikjf   	 rsfs_prec      1       -       -	"uwrece"	"urece*wrece"					"m2 s-2"
+state   real    vwrecf  ikjf   	 rsfs_prec      1       -       -	"vwrecf"	"vrecc*wrecf"					"m2 s-2"
+state   real    trecu   ikjf   	 rsfs_prec      1       -       -	"trecu" 	"trec projected to u nodes"			"K"
+state   real    trecv   ikjf   	 rsfs_prec      1       -       -	"trecv" 	"trec projected to v nodes"			"K"
+state   real    trecw   ikjf   	 rsfs_prec      1       -       -	"trecw" 	"trec projected to w nodes"			"K"
+state   real    utrecu  ikjf     rsfs_prec      1       -       -	"utrecu" 	"urec*trecu"					"K"
+state   real    vtrecv  ikjf     rsfs_prec      1       -       -	"vtrecv" 	"vrec*trecv"					"K"
+state   real    wtrecw  ikjf     rsfs_prec      1       -       -	"wtrecw" 	"wrec*trecw"					"K"
+state   real    qrecu   ikjf   	 rsfs_prec      1       -       -	"qrecu" 	"qrec projected to u nodes"			""
+state   real    qrecv   ikjf   	 rsfs_prec      1       -       -	"qrecv" 	"qrec projected to v nodes"			""
+state   real    qrecw   ikjf   	 rsfs_prec      1       -       -	"qrecw" 	"qrec projected to w nodes"			""
+state   real    uqrecu  ikjf     rsfs_prec      1       -       -	"uqrecu" 	"urec*qrecu"					""
+state   real    vqrecv  ikjf     rsfs_prec      1       -       -	"vqrecv" 	"vrec*qrecv"					""
+state   real    wqrecw  ikjf     rsfs_prec      1       -       -	"wqrecw" 	"wrec*qrecw"					""
+
+state   real    -       ikjf     rsfs_filt	1       -       -       -
+state   real    ufilt   ikjf     rsfs_filt	1       -       -       "ufilt" 	"filtered reconstructed u-velocity"             "m s-1"
+state   real    vfilt   ikjf     rsfs_filt	1       -       -       "vfilt" 	"filtered reconstructed v-velocity"             "m s-1"
+state   real    wfilt   ikjf     rsfs_filt	1       -       -       "wfilt" 	"filtered reconstructed w-velocity"             "m s-1"
+state   real    tfilt   ikjf     rsfs_filt	1       -       -       "tfilt" 	"filtered potential temperature"               	"K"
+state   real    qfilt   ikjf     rsfs_filt	1       -       -       "qfilt" 	"filtered vapor"               			"K"
+state   real    temp    ikjf   	 rsfs_filt      1       -       -	"temp"		"temporary variable used for filtering"		""
+
+state	real	-	ikjf	 rsfs_rmij       1       -       -       -
+state	real    rm11	ikjf     rsfs_rmij       1       -       h	"rm11"		"11 component of RSFS stress tensor"		"m2 s-2"
+state	real    rm22	ikjf     rsfs_rmij       1       -       h	"rm22"		"22 component of RSFS stress tensor"		"m2 s-2"
+state   real    rm33	ikjf     rsfs_rmij       1       -       h	"rm33"		"33 component of RSFS stress tensor"		"m2 s-2"
+state   real    rm12	ikjf     rsfs_rmij       1       -       h	"rm12"		"12 component of RSFS stress tensor"		"m2 s-2"
+state   real    rm13	ikjf     rsfs_rmij       1       -       h	"rm13"		"13 component of RSFS stress tensor"		"m2 s-2"
+state   real    rm23	ikjf     rsfs_rmij       1       -       h	"rm23"		"23 component of RSFS stress tensor"		"m2 s-2"
+state   real    rh1	ikjf     rsfs_rmij       1       -       h	"rh1"		"1 component of RSFS heat flux tensor"		"m^2 s-2"
+state   real    rh2	ikjf     rsfs_rmij       1       -       h	"rh2"		"2 component of RSFS heat flux tensor"		"m^2 s-2"
+state   real    rh3	ikjf     rsfs_rmij       1       -       h	"rh3"		"3 component of RSFS heat flux tensor"		"m^2 s-2"
+state   real    rq1	ikjf     rsfs_rmij       1       -       h	"rq1"		"1 component of RSFS vapor flux tensor"		""
+state   real    rq2	ikjf     rsfs_rmij       1       -       h	"rq2"		"2 component of RSFS vapor flux tensor"		""
+state   real    rq3	ikjf     rsfs_rmij       1       -       h	"rq3"		"3 component of RSFS vapor flux tensor"		""
+
+state	real	us	ij	misc		1	-	-	"us"		"SURFACE BOUNDARY VALUE FOR U AT U NODES"	"m s-1"
+state	real	vs	ij	misc		1	-	-	"vs"		"SURFACE BOUNDARY VALUE FOR V AT V NODES"	"m s-1"
+state	real	ws	ij	misc		1	-	-	"ws"		"SURFACE BOUNDARY VALUE FOR W AT W NODES"	"m s-1"
+state	real	usc	ij	misc		1	-	-	"usc"		"SURFACE BOUNDARY VALUE FOR U AT C NODES"	"m s-1"
+state	real	uusc	ij	misc		1	-	-	"uusc"		"SURFACE BOUNDARY VALUE FOR U*U AT C NODES"	"m2 s-2"
+state	real	vsc	ij	misc		1	-	-	"vsc"		"SURFACE BOUNDARY VALUE FOR V AT C NODES"	"m s-1"
+state	real	vvsc	ij	misc		1	-	-	"vvsc"		"SURFACE BOUNDARY VALUE FOR V*V AT C NODES"	"m2 s-2"
+state	real	wws	ij	misc		1	-	-	"wwsc"		"SURFACE BOUNDARY VALUE FOR W*W AT C NODES"	"m2 s-2"
+state	real	usd	ij	misc		1	-	-	"usd"		"SURFACE BOUNDARY VALUE FOR U AT D NODES"	"m s-1"
+state	real	vsd	ij	misc		1	-	-	"vsd"		"SURFACE BOUNDARY VALUE FOR V AT D NODES"	"m s-1"
+state	real	uvsd	ij	misc		1	-	-	"uvsd"		"SURFACE BOUNDARY VALUE FOR U*V AT D NODES"	"m2 s-2"
+state	real	wse	ij	misc		1	-	-	"wse"		"SURFACE BOUNDARY VALUE FOR W AT E NODES"	"m s-1"
+state	real	uwse	ij	misc		1	-	-	"uwse"		"SURFACE BOUNDARY VALUE FOR U*W AT E NODES"	"m2 s-2"
+state	real	wsf	ij	misc		1	-	-	"wsf"		"SURFACE BOUNDARY VALUE FOR W AT F NODES"	"m s-1"
+state	real	vwsf	ij	misc		1	-	-	"vwsf"		"SURFACE BOUNDARY VALUE FOR V*W AT F NODES"	"m2 s-2"
+state	real	ts	ij	misc		1	-	-	"ts"		"SURFACE BOUNDARY VALUE FOR T AT W NODES"	"K"
+state	real	tsu	ij	misc		1	-	-	"tsu"		"SURFACE BOUNDARY VALUE FOR T AT U NODES"	"K"
+state	real	tsv	ij	misc		1	-	-	"tsv"		"SURFACE BOUNDARY VALUE FOR T AT V NODES"	"K"
+state	real	utsu	ij	misc		1	-	-	"utsu"		"SURFACE BOUNDARY VALUE FOR U*T AT U NODES"	"K m s-1"
+state	real	vtsv	ij	misc		1	-	-	"vtsv"		"SURFACE BOUNDARY VALUE FOR V*T AT V NODES"	"K m s-1"
+state	real	wtsw	ij	misc		1	-	-	"wtsw"		"SURFACE BOUNDARY VALUE FOR W*T AT W NODES"	"K m s-1"
+state	real	qss	ij	misc		1	-	-	"qss"		"SURFACE BOUNDARY VALUE FOR q AT W NODES"	"K"
+state	real	qsu	ij	misc		1	-	-	"qsu"		"SURFACE BOUNDARY VALUE FOR q AT U NODES"	""
+state	real	qsv	ij	misc		1	-	-	"qsv"		"SURFACE BOUNDARY VALUE FOR q AT V NODES"	""
+state	real	uqsu	ij	misc		1	-	-	"uqsu"		"SURFACE BOUNDARY VALUE FOR U*q AT U NODES"	"m s-1"
+state	real	vqsv	ij	misc		1	-	-	"vqsv"		"SURFACE BOUNDARY VALUE FOR V*q AT V NODES"	"m s-1"
+state	real	wqsw	ij	misc		1	-	-	"wqsw"		"SURFACE BOUNDARY VALUE FOR W*q AT W NODES"	"m s-1"
+
+state	real	nwtau13	ikj	misc		1	-	h	"nwtau13"	"Near wall stress component"	"m2 s-1"
+state	real	nwtau23	ikj	misc		1	-	h	"nwtau23"	"Near wall stress component"	"m2 s-1"
+
+!Arays for DRM model
+
+state   real    -       ikjf     tfu_drm		1       -       -       -
+state   real    tfu   	ikjf     tfu_drm		1       -       -       "tfu" 		"test-filtered u-velocity"             "m s-1"
+state   real    tfv   	ikjf     tfu_drm		1       -       -       "tfv" 		"test-filtered v-velocity"             "m s-1"
+state   real    tfw   	ikjf     tfu_drm		1       -       -       "tfw" 		"test-filtered w-velocity"             "m s-1"
+
+state   real    -       ikjf     uc_drm		1       -       -       -
+state   real    uc   	ikjf     uc_drm		1       -       -       "uc" 		"u-velocity at cell center"             "m s-1"
+state   real    vc   	ikjf     uc_drm		1       -       -       "vc" 		"v-velocity at cell center"             "m s-1"
+state   real    wc   	ikjf     uc_drm		1       -       -       "wc" 		"w-velocity at cell center"             "m s-1"
+state   real    uuc  	ikjf     uc_drm		1       -       -       "uuc" 		"u*u at cell center"             	"m s-1"
+state   real    vvc  	ikjf     uc_drm		1       -       -       "vvc" 		"v*v at cell center"             	"m s-1"
+state   real    wwc  	ikjf     uc_drm		1       -       -       "wwc" 		"w*w at cell center"             	"m s-1"
+state   real    uvc  	ikjf     uc_drm		1       -       -       "uvc" 		"u*v at cell center"             	"m s-1"
+state   real    uwc  	ikjf     uc_drm		1       -       -       "uwc" 		"u*w at cell center"             	"m s-1"
+state   real    vwc  	ikjf     uc_drm		1       -       -       "vwc" 		"v*w at cell center"             	"m s-1"
+
+state   real    -       ikjf     tfuc_drm	1       -       -       -
+state   real    tfuc   	ikjf     tfuc_drm	1       -       -       "tfuc" 		"test-filtered u at cell center"          "m s-1"
+state   real    tfvc   	ikjf     tfuc_drm	1       -       -       "tfvc" 		"test-filtered v at cell center"          "m s-1"
+state   real    tfwc   	ikjf     tfuc_drm	1       -       -       "tfwc" 		"test-filtered w at cell center"          "m s-1"
+state   real    tfuuc  	ikjf     tfuc_drm	1       -       -       "tfuuc" 	"test-filtered u*u at cell center"        "m s-1"
+state   real    tfvvc  	ikjf     tfuc_drm	1       -       -       "tfvvc" 	"test-filtered v*v at cell center"        "m s-1"
+state   real    tfwwc  	ikjf     tfuc_drm	1       -       -       "tfwwc" 	"test-filtered w*w at cell center"        "m s-1"
+state   real    tfuvc  	ikjf     tfuc_drm	1       -       -       "tfuvc" 	"test-filtered u*v at cell center"        "m s-1"
+state   real    tfuwc  	ikjf     tfuc_drm	1       -       -       "tfuwc" 	"test-filtered u*w at cell center"        "m s-1"
+state   real    tfvwc  	ikjf     tfuc_drm	1       -       -       "tfvwc" 	"test-filtered v*w at cell center"        "m s-1"
+
+state	real	-	ikjf	 tgrmij_drm       1       -       -       -
+state	real    tgrm11	ikjf     tgrmij_drm       1       -       -	"tgrm11"	"11 component of RSFS stress tensor"		"m2 s-2"
+state	real    tgrm22	ikjf     tgrmij_drm       1       -       -	"tgrm22"	"22 component of RSFS stress tensor"		"m2 s-2"
+state   real    tgrm33	ikjf     tgrmij_drm       1       -       -	"tgrm33"	"33 component of RSFS stress tensor"		"m2 s-2"
+state   real    tgrm12	ikjf     tgrmij_drm       1       -       -	"tgrm12"	"12 component of RSFS stress tensor"		"m2 s-2"
+state   real    tgrm13	ikjf     tgrmij_drm       1       -       -	"tgrm13"	"13 component of RSFS stress tensor"		"m2 s-2"
+state   real    tgrm23	ikjf     tgrmij_drm       1       -       -	"tgrm23"	"23 component of RSFS stress tensor"		"m2 s-2"
+
+state	real	-	ikjf	 tfrmij_drm       1       -       -       -
+state	real    tfrm11	ikjf     tfrmij_drm       1       -       -	"tfrm11"	"11 component of RSFS stress tensor"		"m2 s-2"
+state	real    tfrm22	ikjf     tfrmij_drm       1       -       -	"tfrm22"	"22 component of RSFS stress tensor"		"m2 s-2"
+state   real    tfrm33	ikjf     tfrmij_drm       1       -       -	"tfrm33"	"33 component of RSFS stress tensor"		"m2 s-2"
+state   real    tfrm12	ikjf     tfrmij_drm       1       -       -	"tfrm12"	"12 component of RSFS stress tensor"		"m2 s-2"
+state   real    tfrm13	ikjf     tfrmij_drm       1       -       -	"tfrm13"	"13 component of RSFS stress tensor"		"m2 s-2"
+state   real    tfrm23	ikjf     tfrmij_drm       1       -       -	"tfrm23"	"23 component of RSFS stress tensor"		"m2 s-2"
+
+state	real	-	ikjf	 sijc_drm	1       -       -       -
+state   real    s11c    ikjf     sijc_drm	1       -	-	"s11c"   	"11 component of Sij"      "m s-1"
+state   real    s22c    ikjf     sijc_drm	1       -       -       "s22c"   	"22 component of Sij"      "m s-1"
+state   real    s33c    ikjf     sijc_drm	1       -       -       "s33c"   	"33 component of Sij"      "m s-1"
+state   real    s12c    ikjf     sijc_drm	1       -       -       "s12c"   	"12 component of Sij"      "m s-1"
+state   real    s13c    ikjf     sijc_drm	1       -       -       "s13c"   	"13 component of Sij"      "m s-1"
+state   real    s23c    ikjf     sijc_drm	1       -       -       "s23c"   	"23 component of Sij"      "m s-1"
+
+state	real	-       ikjf     tfsij_drm	1       -       -       -
+state   real    tfs11   ikjf     tfsij_drm	1       -	-	"tfs11"   	"11 component of Sij"      "m s-1"
+state   real    tfs22   ikjf     tfsij_drm	1       -       -       "tfs22"   	"22 component of Sij"      "m s-1"
+state   real    tfs33   ikjf     tfsij_drm	1       -       -       "tfs33"   	"33 component of Sij"      "m s-1"
+state   real    tfs12   ikjf     tfsij_drm	1       -       -       "tfs12"   	"12 component of Sij"      "m s-1"
+state   real    tfs13   ikjf     tfsij_drm	1       -       -       "tfs13"   	"13 component of Sij"      "m s-1"
+state   real    tfs23   ikjf     tfsij_drm	1       -       -       "tfs23"   	"23 component of Sij"      "m s-1"
+
+state	real	-	ikjf	 tfsijc_drm	1       -       -       -
+state   real    tfs11c  ikjf     tfsijc_drm	1       -	-	"tfs11c"   	"11 component of Sij"      "m s-1"
+state   real    tfs22c  ikjf     tfsijc_drm	1       -       -       "tfs22c"   	"22 component of Sij"      "m s-1"
+state   real    tfs33c  ikjf     tfsijc_drm	1       -       -       "tfs33c"   	"33 component of Sij"      "m s-1"
+state   real    tfs12c  ikjf     tfsijc_drm	1       -       -       "tfs12c"   	"12 component of Sij"      "m s-1"
+state   real    tfs13c  ikjf     tfsijc_drm	1       -       -       "tfs13c"   	"13 component of Sij"      "m s-1"
+state   real    tfs23c  ikjf     tfsijc_drm	1       -       -       "tfs23c"   	"23 component of Sij"      "m s-1"
+
+state	real	-	ikjf	 hij_drm		1       -       -       -
+state   real    h11     ikjf     hij_drm		1       -	-	"h11"   	"11 component of Sij"      "m s-1"
+state   real    h22     ikjf     hij_drm		1       -       -       "h22"   	"22 component of Sij"      "m s-1"
+state   real    h33     ikjf     hij_drm		1       -       -       "h33"   	"33 component of Sij"      "m s-1"
+state   real    h12     ikjf     hij_drm		1       -       -       "h12"   	"12 component of Sij"      "m s-1"
+state   real    h13     ikjf     hij_drm		1       -       -       "h13"   	"13 component of Sij"      "m s-1"
+state   real    h23     ikjf     hij_drm		1       -       -       "h23"   	"23 component of Sij"      "m s-1"
+
+state	real	-	ikjf	 hijc_drm	1       -       -       -
+state   real    h11c    ikjf     hijc_drm	1       -	-	"h11c"   	"11 component of Sij"      "m s-1"
+state   real    h22c    ikjf     hijc_drm	1       -       -       "h22c"   	"22 component of Sij"      "m s-1"
+state   real    h33c    ikjf     hijc_drm	1       -       -       "h33c"   	"33 component of Sij"      "m s-1"
+state   real    h12c    ikjf     hijc_drm	1       -       -       "h12c"   	"12 component of Sij"      "m s-1"
+state   real    h13c    ikjf     hijc_drm	1       -       -       "h13c"   	"13 component of Sij"      "m s-1"
+state   real    h23c    ikjf     hijc_drm	1       -       -       "h23c"   	"23 component of Sij"      "m s-1"
+
+state   real    -       ikjf     evc_drm	1       -       -       -
+state   real    drmn   	ikjf     evc_drm	1       -       -       "drmn" 		"filtered reconstructed u-velocity"             "m s-1"
+state   real    drmd  	ikjf     evc_drm	1       -       -       "drmd" 		"filtered reconstructed v-velocity"             "m s-1"
+state   real    fdrmn  	ikjf     evc_drm	1       -       -       "fdrmn" 	"filtered reconstructed w-velocity"             "m s-1"
+state   real    fdrmd  	ikjf     evc_drm	1       -       -       "fdrmd" 	"filtered reconstructed w-velocity"             "m s-1"
+
+state	real	defor12_cc ikj	misc		1	-	-	"defor12_cc"	"deformation 12 computed at cell center"	"s-1"
+state	real	defor13_cc ikj	misc		1	-	-	"defor13_cc"	"deformation 13 computed at cell center"	"s-1"
+state	real	defor23_cc ikj	misc		1	-	-	"defor23_cc"	"deformation 23 computed at cell center"	"s-1"
+
+
+state   real    pert_t   ikj    misc            1       -       rh      "pert_t"        ""      "K"
+state   real    prttms   -      misc            1       -       r       "prttms"        ""      "s"
+state   real    prtdt    -      misc            1       -       r       "prtdt"         ""      "s"
+state   real    prtz     -      misc            1       -       r       "prtz"          ""      "m"
+state   integer prtnk    -      misc            1       -       r       "prtnk"         ""      ""
+state   integer prtseed  k      misc            1       -       r       "prtseed"       ""      ""
+state   real    m_pblh   ij     misc            1       -       rhdf    "m_pblh"       "PBL height for stoch. LES inflow perts" "m"
+
+rconfig real    z_rough         namelist,dynamics       max_domains     0.1     -       "roughness length for surface similarity"
+rconfig integer defor_opt       namelist,dynamics       max_domains     0       -       ">1 calculate D_12, D_13 and D_23 at cell centers"
+rconfig integer wall_opt        namelist,dynamics       max_domains     0       -       ">1 different wall models"
+
+rconfig	integer sfs_opt 	namelist,dynamics	max_domains     0       -	"1 or 2 to use NBA models"
+rconfig	integer m_opt    	namelist,dynamics       max_domains     0       -       "1 to output sgs stresses if not using NBA"
+rconfig	integer drm_opt    	namelist,dynamics  	max_domains     0       -       " "
+rconfig	integer rsfsvsbc_opt    namelist,dynamics  	max_domains     0       -       " "
+rconfig	integer rsfs_opt    	namelist,dynamics    	max_domains     6       -       "level of reconstruction for RSFS stress"
+rconfig	integer lasd_opt    	namelist,dynamics   	max_domains     0       -       "1 to use LASD model"
+rconfig	integer filter_opt 	namelist,dynamics	max_domains     2       -	"2 to use 2-D filter, 3 to use 3-D filter for LASD model"
+rconfig	integer lasdvsbc_opt    namelist,dynamics   	max_domains     0       -       " "
+rconfig	integer can_opt    	namelist,dynamics   	max_domains     0       -       "to use separate near-wall canopy stress model"
+rconfig	real 	canfact    	namelist,dynamics   	max_domains     0.0       -     "near-wall canopy stress model amplitude factor"
+rconfig	integer les_pert_opt   	namelist,dynamics       max_domains     0       -       "Option to use stoch LES inflow perts, 0 is off"
+rconfig	integer m_pblh_opt    	namelist,dynamics       max_domains     0       -       "1 to calculate mesoscale pblh and pass to LES for stoch LES inflow perts, 0 is off"
+
+package	nosfs	sfs_opt==0      	-       -
+package	nba1	sfs_opt==1      	-       nba_mij:m11,m22,m33,m12,m13,m23,mh1,mh2,mh3,mq1,mq2,mq3;nba_rij:r12,r13,r23,r12_cc,r13_cc,r23_cc,smnsmn
+package	nba2	sfs_opt==2      	-       nba_mij:m11,m22,m33,m12,m13,m23,mh1,mh2,mh3,mq1,mq2,mq3;nba_rij:r12,r13,r23,r12_cc,r13_cc,r23_cc,smnsmn
+
+package mout	m_opt==1		-	nba_mij:m11,m22,m33,m12,m13,m23,mh1,mh2,mh3,mq1,mq2,mq3
+
+package lasd3	lasd_opt==3		-	lasd_uvw_bar_hat:ubar,vbar,wbar,uhat,vhat,what;lasd_s_bar_hat:s11bar,s22bar,s33bar,s12bar,s13bar,s23bar,s11hat,s22hat,s33hat,s12hat,s13hat,s23hat;lasd_Sij:S11,S22,S33,S12,S13,S23;lasd_Lij:L11,L22,L33,L12,L13,L23;lasd_Qij:Q11,Q22,Q33,Q12,Q13,Q23;lasd_Gij:G11,G22,G33,G12,G13,G23;lasd_Nij:N11,N22,N33,N12,N13,N23;lasd_TC:CS,SS,SS_BAR,SS_HAT,LG,GG,QN,NN,FF_LG,FF_GG,FF_QN,FF_NN;lasd_LAGR:F_LG,F_GG,F_QN,F_NN
+
+package norsfs	rsfs_opt==6		-	-
+package rsfs0	rsfs_opt==0		-	rsfs_rec:urec,vrec,wrec,trec,qrec;rsfs_prec:urecc,vrecc,wrecc,urecd,vrecd,urece,wrece,vrecf,wrecf,uurecc,vvrecc,wwrecc,uvrecd,uwrece,vwrecf,trecu,trecv,trecw,utrecu,vtrecv,wtrecw,qrecu,qrecv,qrecw,uqrecu,vqrecv,wqrecw;rsfs_rmij:rm11,rm22,rm33,rm12,rm13,rm23,rh1,rh2,rh3,rq1,rq2,rq3
+package rsfs1	rsfs_opt==1		-	rsfs_rec:urec,vrec,wrec,trec,qrec;rsfs_prec:urecc,vrecc,wrecc,urecd,vrecd,urece,wrece,vrecf,wrecf,uurecc,vvrecc,wwrecc,uvrecd,uwrece,vwrecf,trecu,trecv,trecw,utrecu,vtrecv,wtrecw,qrecu,qrecv,qrecw,uqrecu,vqrecv,wqrecw;rsfs_filt:ufilt,vfilt,wfilt,tfilt,qfilt,temp;rsfs_rmij:rm11,rm22,rm33,rm12,rm13,rm23,rh1,rh2,rh3,rq1,rq2,rq3	
+package rsfs2	rsfs_opt==2		-	rsfs_rec:urec,vrec,wrec,trec,qrec;rsfs_prec:urecc,vrecc,wrecc,urecd,vrecd,urece,wrece,vrecf,wrecf,uurecc,vvrecc,wwrecc,uvrecd,uwrece,vwrecf,trecu,trecv,trecw,utrecu,vtrecv,wtrecw,qrecu,qrecv,qrecw,uqrecu,vqrecv,wqrecw;rsfs_filt:ufilt,vfilt,wfilt,tfilt,qfilt,temp;rsfs_rmij:rm11,rm22,rm33,rm12,rm13,rm23,rh1,rh2,rh3,rq1,rq2,rq3
+package rsfs3	rsfs_opt==3		-	rsfs_rec:urec,vrec,wrec,trec,qrec;rsfs_prec:urecc,vrecc,wrecc,urecd,vrecd,urece,wrece,vrecf,wrecf,uurecc,vvrecc,wwrecc,uvrecd,uwrece,vwrecf,trecu,trecv,trecw,utrecu,vtrecv,wtrecw,qrecu,qrecv,qrecw,uqrecu,vqrecv,wqrecw;rsfs_filt:ufilt,vfilt,wfilt,tfilt,qfilt,temp;rsfs_rmij:rm11,rm22,rm33,rm12,rm13,rm23,rh1,rh2,rh3,rq1,rq2,rq3
+package rsfs4	rsfs_opt==4		-	rsfs_rec:urec,vrec,wrec,trec,qrec;rsfs_prec:urecc,vrecc,wrecc,urecd,vrecd,urece,wrece,vrecf,wrecf,uurecc,vvrecc,wwrecc,uvrecd,uwrece,vwrecf,trecu,trecv,trecw,utrecu,vtrecv,wtrecw,qrecu,qrecv,qrecw,uqrecu,vqrecv,wqrecw;rsfs_filt:ufilt,vfilt,wfilt,tfilt,qfilt,temp;rsfs_rmij:rm11,rm22,rm33,rm12,rm13,rm23,rh1,rh2,rh3,rq1,rq2,rq3
+package rsfs5	rsfs_opt==5		-	rsfs_rec:urec,vrec,wrec,trec,qrec;rsfs_prec:urecc,vrecc,wrecc,urecd,vrecd,urece,wrece,vrecf,wrecf,uurecc,vvrecc,wwrecc,uvrecd,uwrece,vwrecf,trecu,trecv,trecw,utrecu,vtrecv,wtrecw,qrecu,qrecv,qrecw,uqrecu,vqrecv,wqrecw;rsfs_filt:ufilt,vfilt,wfilt,tfilt,qfilt,temp;rsfs_rmij:rm11,rm22,rm33,rm12,rm13,rm23,rh1,rh2,rh3,rq1,rq2,rq3
+
+package drm1	drm_opt==1		-	tfu_drm:tfu,tfv,tfw;uc_drm:uc,vc,wc,uuc,vvc,wwc,uvc,uwc,vwc;tfuc_drm:tfuc,tfvc,tfwc,tfuuc,tfvvc,tfwwc,tfuvc,tfuwc,tfvwc;tgrmij_drm:tgrm11,tgrm22,tgrm33,tgrm12,tgrm13,tgrm23;tfrmij_drm:tfrm11,tfrm22,tfrm33,tfrm12,tfrm13,tfrm23;sijc_drm:s11c,s22c,s33c,s12c,s13c,s23c;hij_drm:h11,h22,h33,h12,h13,h23;hijc_drm:h11c,h22c,h33c,h12c,h13c,h23c;tfsij_drm:tfs11,tfs22,tfs33,tfs12,tfs13,tfs23;tfsijc_drm:tfs11c,tfs22c,tfs33c,tfs12c,tfs13c,tfs23c;evc_drm:drmn,drmd,fdrmn,fdrmd
+
+halo      HALO_EM_NBA_MIJ	dyn_em 8:nba_mij
+period    PERIOD_EM_NBA_MIJ   	dyn_em 3:nba_mij
+
+halo      HALO_EM_NBA_RIJ       dyn_em 8:nba_rij
+period    PERIOD_EM_NBA_RIJ     dyn_em 3:nba_rij
+
+halo      HALO_EM_DEFOR_CC       dyn_em 8:defor12_cc,defor13_cc,defor23_cc
+period    PERIOD_EM_DEFOR_CC     dyn_em 3:defor12_cc,defor13_cc,defor23_cc
+
+halo      HALO_EM_LASD_UVW_BAR_HAT       dyn_em 8:lasd_uvw_bar_hat
+period    PERIOD_EM_LASD_UVW_BAR_HAT     dyn_em 3:lasd_uvw_bar_hat
+
+halo      HALO_EM_LASD_S_BAR_HAT       dyn_em 8:lasd_s_bar_hat
+period    PERIOD_EM_LASD_S_BAR_HAT     dyn_em 3:lasd_s_bar_hat
+
+halo      HALO_EM_LASD_SIJ       dyn_em 8:lasd_Sij
+period    PERIOD_EM_LASD_SIJ     dyn_em 3:lasd_Sij
+
+halo      HALO_EM_LASD_LIJ       dyn_em 8:lasd_Lij
+period    PERIOD_EM_LASD_LIJ     dyn_em 3:lasd_Lij
+
+halo      HALO_EM_LASD_QIJ       dyn_em 8:lasd_Qij
+period    PERIOD_EM_LASD_QIJ     dyn_em 3:lasd_Qij
+
+halo      HALO_EM_LASD_GIJ       dyn_em 8:lasd_Gij
+period    PERIOD_EM_LASD_GIJ     dyn_em 3:lasd_Gij
+
+halo      HALO_EM_LASD_NIJ       dyn_em 8:lasd_Nij
+period    PERIOD_EM_LASD_NIJ     dyn_em 3:lasd_Nij
+
+halo      HALO_EM_LASD_TC       dyn_em 8:lasd_TC
+period    PERIOD_EM_LASD_TC     dyn_em 3:lasd_TC
+
+halo      HALO_EM_LASD_LAGR       dyn_em 8:lasd_LAGR
+period    PERIOD_EM_LASD_LAGR     dyn_em 3:lasd_LAGR
+
+halo      HALO_EM_EV		  dyn_em 8:xkmv,xkmh,xkhv,xkhh
+period    PERIOD_EM_EV		  dyn_em 3:xkmv,xkmh,xkhv,xkhh
+
+halo      HALO_EM_LASD_PUVWS	dyn_em 8:ws,usc,uusc,vsc,vvsc,wws,uvsd,uwse,vwsf
+period    PERIOD_EM_LASD_PUVWS	dyn_em 3:ws,usc,uusc,vsc,vvsc,wws,uvsd,uwse,vwsf
+
+halo      HALO_EM_RSFS_REC	dyn_em 8:rsfs_rec
+period    PERIOD_EM_RSFS_REC   	dyn_em 3:rsfs_rec
+
+halo      HALO_EM_RSFS_FILT     dyn_em 8:rsfs_filt
+period    PERIOD_EM_RSFS_FILT   dyn_em 3:rsfs_filt
+
+halo      HALO_EM_RSFS_PREC     dyn_em 8:rsfs_prec
+period    PERIOD_EM_RSFS_PREC   dyn_em 3:rsfs_prec
+
+halo      HALO_EM_RSFS_RMIJ     dyn_em 8:rsfs_rmij
+period    PERIOD_EM_RSFS_RMIJ   dyn_em 3:rsfs_rmij
+
+halo      HALO_EM_RSFS_UVWS	dyn_em 8:us,vs,ws,ts,qss
+period    PERIOD_EM_RSFS_UVWS	dyn_em 3:us,vs,ws,ts,qss
+
+halo      HALO_EM_RSFS_PUVWS	dyn_em 8:usc,uusc,vsc,vvsc,wws,usd,vsd,uvsd,wse,uwse,wsf,vwsf,tsu,tsv,utsu,vtsv,wtsw,qsu,qsv,uqsu,vqsv,wqsw
+period    PERIOD_EM_RSFS_PUVWS	dyn_em 3:usc,uusc,vsc,vvsc,wws,usd,vsd,uvsd,wse,uwse,wsf,vwsf,tsu,tsv,utsu,vtsv,wtsw,qsu,qsv,uqsu,vqsv,wqsw
+
+halo      HALO_EM_TFU_DRM	dyn_em 8:tfu_drm
+period    PERIOD_EM_TFU_DRM	dyn_em 3:tfu_drm
+
+halo      HALO_EM_UC_DRM	dyn_em 8:uc_drm
+period    PERIOD_EM_UC_DRM	dyn_em 3:uc_drm
+
+halo      HALO_EM_TFUC_DRM	dyn_em 8:tfuc_drm
+period    PERIOD_EM_TFUC_DRM	dyn_em 3:tfuc_drm
+
+halo      HALO_EM_TFRMIJ_DRM	dyn_em 8:tfrmij_drm
+period    PERIOD_EM_TFRMIJ_DRM	dyn_em 3:tfrmij_drm
+
+halo      HALO_EM_SIJC_DRM	dyn_em 8:sijc_drm
+period    PERIOD_EM_SIJC_DRM	dyn_em 3:sijc_drm
+
+halo      HALO_EM_HIJ_DRM	dyn_em 8:hij_drm
+period    PERIOD_EM_HIJ_DRM	dyn_em 3:hij_drm
+
+halo      HALO_EM_HIJC_DRM	dyn_em 8:hijc_drm
+period    PERIOD_EM_HIJC_DRM	dyn_em 3:hijc_drm
+
+halo      HALO_EM_TFSIJ_DRM	dyn_em 8:tfsij_drm
+period    PERIOD_EM_TFSIJ_DRM	dyn_em 3:tfsij_drm
+
+halo      HALO_EM_TFSIJC_DRM	dyn_em 8:tfsijc_drm
+period    PERIOD_EM_TFSIJC_DRM	dyn_em 3:tfsijc_drm
+
+halo      HALO_EM_EVC_DRM	dyn_em 8:evc_drm
+period    PERIOD_EM_EVC_DRM	dyn_em 3:evc_drm
+
+halo      HALO_EM_NWTAU		dyn_em 8:nwtau13,nwtau23
+period    PERIOD_EM_NWTAU	dyn_em 3:nwtau13,nwtau23
+
+

@@ -364,7 +364,7 @@ MODULE module_gen_act_disk
     hub_height(1)     = 80.0  
     rotor_diameter(1) = 77.0 
     blade_length(1)   = 38.5*(1.0-0.0444) !PSU1.5 turbine
-    theta_turbine(1)  = 0.0 
+    theta_turbine(1)  = 180.0 
 
   ENDIF
 
