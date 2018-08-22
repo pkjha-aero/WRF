@@ -187,7 +187,7 @@ MODULE module_gen_act_disk
 
   REAL :: dxo2, dyo2, zmin_k, zmin_kp1, zmax_k, zmax_kp1, dz, eps
 
-  REAL :: theta, phi
+  REAL :: theta
 
   INTEGER :: naninf
 
@@ -364,7 +364,7 @@ MODULE module_gen_act_disk
     hub_height(1)     = 80.0  
     rotor_diameter(1) = 77.0 
     blade_length(1)   = 38.5*(1.0-0.0444) !PSU1.5 turbine
-    theta_turbine(1)  = 180.0 
+    theta_turbine(1)  = 0.0 
 
   ENDIF
 
@@ -599,8 +599,6 @@ MODULE module_gen_act_disk
 
       theta =  theta_turbine(n)*pi/180.0
 
-      phi   = theta 
-
 !-- If turbine hub is within the tile do the following
 
       IF ( (x_turbine(n) .GE. xmin_tile) .AND. (x_turbine(n) .LT. xmax_tile) .AND. &
@@ -631,7 +629,7 @@ MODULE module_gen_act_disk
 
         kmin=minloc(abs(turb_z(kts+1:k_end)),1)+kts
 
-        v0inst = u(imin,kmin,jmin)*cos(phi)*cos(tilt)+v(imin,kmin,jmin)*sin(phi)*cos(tilt) !Instantaneous velocity component normal to the rotor.
+        v0inst = u(imin,kmin,jmin)*cos(theta)*cos(tilt)+v(imin,kmin,jmin)*sin(theta)*cos(tilt) !Instantaneous velocity component normal to the rotor.
                                                                        !Negative indicates flow coming from behind the rotor.
 
         IF (wp_opt .EQ. 3 ) THEN
@@ -869,8 +867,6 @@ MODULE module_gen_act_disk
 
       theta =  theta_turbine(n)*pi/180.0
 
-      phi   = theta
-
       IF ( v0 .lt. 0.0 ) THEN
         v0 = 0.0
       ENDIF
@@ -947,12 +943,12 @@ MODULE module_gen_act_disk
 !      adenom = sigma*sqrt(2.0*pi)
 !      bdenom  = 2.0*sigma*sigma
 
-      sigma   = (abs(dx*cos(phi))+abs(dy*sin(phi))) !NM so normal for rotor plane sqrt(dx*dy)	!!!This is the standard deviation
+      sigma   = (abs(dx*cos(theta))+abs(dy*sin(theta))) !NM so normal for rotor plane sqrt(dx*dy)	!!!This is the standard deviation
       adenom  = sigma*sqrt(2.0*pi)                  !want integral=1 for Gaussian ;accel will have units of 1/m
       bdenom  = 2.*sigma*sigma                      !!determines spread of gaussian
 
       !NM sigmar normal to rotor plane
-      sigmar = abs(dx*cos(phi)*cos(tilt))+abs(dy*sin(phi)*cos(tilt)) !NM
+      sigmar = abs(dx*cos(theta)*cos(tilt))+abs(dy*sin(theta)*cos(tilt)) !NM
       adenom2 = sigmar*sqrt(2.0*pi) !NM want integral to be 1 for gaussian
       bdenom2 = 2.*sigmar**2 !NM spread of 1-D gaussian 
 
@@ -970,7 +966,7 @@ MODULE module_gen_act_disk
 
           DO i = i_start, i_end
 
-             v0 = u(i,k,j)*cos(phi)*cos(tilt) + v(i,k,j)*sin(phi)*cos(tilt) - w(i,k,j)*sin(tilt)  
+             v0 = u(i,k,j)*cos(theta)*cos(tilt) + v(i,k,j)*sin(theta)*cos(tilt) - w(i,k,j)*sin(tilt)  
 
              IF (cdt .GT. 0.0 ) THEN !Tower------------------------------------------------------	
 
@@ -985,7 +981,7 @@ MODULE module_gen_act_disk
                             fn = 0.5*rho*v0*v0*Cdt !NM force per unit area for tower
                             ft = 0.0 !NM no tangential force
                             acc_u = (1.0/adenom)*exp(-(dru(i,j)**2)/bdenom) !NM 1-D !Gaussian
-                            fx = fn*cos(phi) !NM to x direction
+                            fx = fn*cos(theta) !NM to x direction
 
                             ru_tendf(i,k,j) = ru_tendf(i,k,j) - muu(i,j)*acc_u*cnst*fx !NM
 
@@ -1004,7 +1000,7 @@ MODULE module_gen_act_disk
                             fn = 0.5*rho*v0*v0*Cdt !NM force per unit area for tower
                             ft = 0.0 !NM no tangential force
                             acc_v = (1.0/adenom)*exp(-(drv(i,j)**2)/bdenom) !NM 1-D !Gaussian
-                            fy = fn*sin(phi) !NM to x direction
+                            fy = fn*sin(theta) !NM to x direction
                             rv_tendf(i,k,j) = rv_tendf(i,k,j) - muv(i,j)*acc_v*cnst*fy !NM
 
                         END IF
@@ -1026,19 +1022,19 @@ MODULE module_gen_act_disk
 
 	        acc_u = (1.0/adenom)*exp(-((dru(i,j)-hoff)**2)/bdenom) !NM 1-D gaussian, hub has no tilt.
  
-                fx = fn*cos(phi) 	 
+                fx = fn*cos(theta) 	 
  
                 ru_tendf(i,k,j) = ru_tendf(i,k,j) &
                                   - muu(i,j)*acc_u*cnst*fx
 
-!JDM	        thrust(i,k,j) = thrust(i,k,j)-fn*cos(phi)*acc_u     		
+!JDM	        thrust(i,k,j) = thrust(i,k,j)-fn*cos(theta)*acc_u     		
                 !!thrust everywhere is equal to current thrust plus force distribution due to gaussian times normal force
 
 	     ELSE !GAD-------------------------------------------------------------------------------------------------
 
 	        IF (tilt .eq. 0.0) THEN !No Tilt-----------------------------------------------------------------------
 
-                   drut = dru(i,j)-hoff	!distance only depends on x value!!!if phi is zero the normal distance will be x0
+                   drut = dru(i,j)-hoff	!distance only depends on x value!!!if theta is zero the normal distance will be x0
 
                    radius = sqrt( dau(i,j)**2 + dzu(i,k,j)**2 )
 
@@ -1070,11 +1066,11 @@ MODULE module_gen_act_disk
                 fn = fnft(1)
                 ft = fnft(2)
   
-                fx = fn*cos(phi)*cos(tilt) + ft*sin(zeta)*sin(phi) - ft*cos(zeta)*sin(tilt)*cos(phi)
+                fx = fn*cos(theta)*cos(tilt) + ft*sin(zeta)*sin(theta) - ft*cos(zeta)*sin(tilt)*cos(theta)
                 
-!JDM TEST SIGN 12/2014     fx = fn*cos(phi)*cos(tilt) 
-!JDM TEST SIGN 12/2014     fx = ft*sin(zeta)*sin(phi) 
-!JDM TEST SIGN 12/2014     fx = -ft*cos(zeta)*sin(tilt)*cos(phi)
+!JDM TEST SIGN 12/2014     fx = fn*cos(theta)*cos(tilt) 
+!JDM TEST SIGN 12/2014     fx = ft*sin(zeta)*sin(theta) 
+!JDM TEST SIGN 12/2014     fx = -ft*cos(zeta)*sin(tilt)*cos(theta)
 
 !print*,'i,j,k',k,j,i
 !print*,'v0, pitchdeg, rpm',v0, pitchdeg, rpm
@@ -1097,7 +1093,7 @@ MODULE module_gen_act_disk
 
 		  acc_v = (1.0/adenom)*exp(-((drv(i,j)-hoff)**2)/bdenom) 
 
-		  fy = fn*sin(phi) 
+		  fy = fn*sin(theta) 
 
 		  rv_tendf(i,k,j) = rv_tendf(i,k,j) &
                                    - muv(i,j)*acc_v*cnst*fy
@@ -1106,7 +1102,7 @@ MODULE module_gen_act_disk
 
                  IF (tilt .eq. 0.0) THEN !No Tilt-----------------------------------------------------------------------
 
-        	    drvt = drv(i,j)-hoff	!distance only depends on x value !!!if phi is zero the normal distance will be x0
+        	    drvt = drv(i,j)-hoff	!distance only depends on x value !!!if theta is zero the normal distance will be x0
 
                     radius = sqrt( dav(i,j)**2 + dzv(i,k,j)**2 )
 
@@ -1132,11 +1128,11 @@ MODULE module_gen_act_disk
                  fn = fnft(1)
                  ft = fnft(2)
 
-                fy = fn*sin(phi)*cos(tilt) - ft*sin(zeta)*cos(phi) - ft*cos(zeta)*sin(tilt)*sin(phi)	!NM 
+                fy = fn*sin(theta)*cos(tilt) - ft*sin(zeta)*cos(theta) - ft*cos(zeta)*sin(tilt)*sin(theta)	!NM 
 
-!JDM TEST SIGN 12/2014      fy = fn*sin(phi)*cos(tilt)
-!JDM TEST SIGN 12/2014      fy = -ft*sin(zeta)*cos(phi)
-!JDM TEST SIGN 12/2014      fy = -ft*cos(zeta)*sin(tilt)*sin(phi)
+!JDM TEST SIGN 12/2014      fy = fn*sin(theta)*cos(tilt)
+!JDM TEST SIGN 12/2014      fy = -ft*sin(zeta)*cos(theta)
+!JDM TEST SIGN 12/2014      fy = -ft*cos(zeta)*sin(tilt)*sin(theta)
 
                  rv_tendf(i,k,j) = rv_tendf(i,k,j) &
                                   - muv(i,j)*acc_v*cnst*fy
@@ -1149,7 +1145,7 @@ MODULE module_gen_act_disk
 
               IF (tilt .eq. 0.0) THEN !No Tilt --------------------------------------------------------------------
 
-        	 drwt = drw(i,j)-hoff	!distance only depends on x value              			!!!if phi is zero the normal distance will be x0
+        	 drwt = drw(i,j)-hoff	!distance only depends on x value              			!!!if theta is zero the normal distance will be x0
 
                  radius = sqrt( daw(i,j)**2 + dzw(i,k,j)**2 )
 
@@ -1244,7 +1240,6 @@ SUBROUTINE calc_distance( x_turb, y_turb, theta_turb,     &
 
 ! LOCAL VARIABLES
 
-  REAL    :: phi
   REAL    :: aa, ba, ca
   REAL    :: ar, br, cr
   REAL    :: x0u, x0v, x0w
@@ -1252,18 +1247,15 @@ SUBROUTINE calc_distance( x_turb, y_turb, theta_turb,     &
   INTEGER :: i, j
 
   theta =  theta_turb*pi/180.0
-!JDM      phi   = 0.5*pi-theta     
-  phi = theta                         !JDM  
- 
 
 ! rp indicates rotor plane 
 
 !  z                                               y    
-!  |             rp                          rp    |      tan(phi) = y/x  
+!  |             rp                          rp    |      tan(theta) = y/x  
 !                |                            \    |               .    
 !                |                             \   |           . ^      
 !                |                              \  |       .     |       
-!                |___                            \ |   .     phi | 
+!                |___                            \ |   .   theta | 
 !    .  .  .  .  |___|  .  .  .       ____________\|_____________|__ x
 !        |       | ||                          .   |\
 !    dau |       | ||                      .       | \
@@ -1277,24 +1269,24 @@ SUBROUTINE calc_distance( x_turb, y_turb, theta_turb,     &
 !
 ! 1. Obtain coefficients for normal distance, dau, to axial plane, the plane 
 ! containing the dotted lines above, normal to the center of the rotor disk. 
-! tan(phi) = y/x is the slope of this line in the x-y plane.
+! tan(theta) = y/x is the slope of this line in the x-y plane.
 !
 ! If looking from a point p upwind of the turbine and facing it, positive
 ! distance is to the right and negative is to the left. Switching this
 ! sign convention along with the zd sign convention would be needed to get
 ! assumtion that ft rotates clockwise and not counterclockwise 	
 
-  IF ( ( phi .LT. 0.5*pi ) .OR. (phi .GT. 1.5*pi) ) THEN   ! Quadrants 1 or 4 	
-        aa = tan(phi)                                          
+  IF ( ( theta .LT. 0.5*pi ) .OR. (theta .GT. 1.5*pi) ) THEN   ! Quadrants 1 or 4 	
+        aa = tan(theta)                                          
         ba = -1.0                      !neg because for ax + by + c = 0, slope m = -a/b                                        
-     ELSEIF ( phi .EQ. 0.5*pi ) THEN	                   ! INFINITE SLOPE
+     ELSEIF ( theta .EQ. 0.5*pi ) THEN	                   ! INFINITE SLOPE
         aa = 1.0                       !x coordinate of point p 
 	ba = 0.0                      
-     ELSEIF ( phi .EQ. 1.5*pi ) THEN	                   ! INFINITE SLOPE
+     ELSEIF ( theta .EQ. 1.5*pi ) THEN	                   ! INFINITE SLOPE
     	aa = -1.0                      !negative of x coordinate of point p 
         ba = 0.0
      ELSE                                                  ! Quadrants 2 or 3 	
-     	aa = -tan(phi)
+     	aa = -tan(theta)
 	ba = 1.0	
      ENDIF
      ca = 0.0                    !no slope intercept, center of rotor plane is the origin
@@ -1302,23 +1294,23 @@ SUBROUTINE calc_distance( x_turb, y_turb, theta_turb,     &
 ! 2. Obtain coefficients for normal distance to rp, dru.
 !    Negative downwind and positive (+) upwind
 
-     IF ( phi .EQ. 0.5*pi ) THEN
+     IF ( theta .EQ. 0.5*pi ) THEN
         ar = 0.0
 	br = -1.0                  !distance only depends on y value
-     ELSEIF ( phi .EQ. 0.) THEN 
-        ar = -1.0                  !distance only depends on x value, if phi is zero the normal distance will be x0
+     ELSEIF ( theta .EQ. 0.) THEN 
+        ar = -1.0                  !distance only depends on x value, if theta is zero the normal distance will be x0
         br = 0.0  
-     ELSEIF ( phi .LT. pi ) THEN 
-        ar = -1.0/tan(phi)         !Since perpendicular, take negative reciprocal for slope
+     ELSEIF ( theta .LT. pi ) THEN 
+        ar = -1.0/tan(theta)         !Since perpendicular, take negative reciprocal for slope
         br = -1.0                  !Must correspond to shortest line
-     ELSEIF ( phi .EQ. 1.5*pi ) THEN
+     ELSEIF ( theta .EQ. 1.5*pi ) THEN
      	ar = 0.0
 	br = 1.0                   !distance only depends on y value
-     ELSEIF ( phi .EQ. pi ) THEN 
+     ELSEIF ( theta .EQ. pi ) THEN 
      	ar = 1.0                   !distance only depends on x value
 	br = 0.0
-     ELSE                          !phi between pi and 2pi
-	ar = 1.0/tan(phi)
+     ELSE                          !theta between pi and 2pi
+	ar = 1.0/tan(theta)
 	br = 1.0
      ENDIF
      cr = 0.0
