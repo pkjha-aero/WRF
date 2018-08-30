@@ -35,8 +35,8 @@ rconfig integer  n_turbines      namelist,physics   1               0      rh   
 rconfig integer  n_timeseries    namelist,physics   1               0      rh      "n_timeseries"      ""      ""
 rconfig integer  n_tmeturb       namelist,physics   1               0      rh      "n_tmeturb"         ""      ""
 
-rconfig integer   windturb_spec_opt  namelist,physics   1           1       h      "windturb_spec_opt"  ""      "" #RSA units of turbine location (1=meters from edge of domain, 2=lat/lon)
 rconfig character windturb_spec      namelist,physics   1	    "none"  -	   "windturb_spec"	"" 	"" #RSA file for reading in turbine info
+rconfig logical   turb_loc_in_latlon namelist,physics   1           .false. h      "turb_loc_in_latlon" ""      "" #RSA flag for whether turbine location is lat/lon (else in meters from edge of domain)
 
 package noturbine  wp_opt==0             -             - 
 package genactdisk2 wp_opt==2            -             state:wp_acc_u,wp_acc_v,wp_acc_w,wp_thrust,wp_torque,wp_rotrate,wp_power,x_turbine,y_turbine,hub_height,rotor_diameter,blade_length,theta_turbine,acc_yaw_err,v0t,d0t,wp_ts

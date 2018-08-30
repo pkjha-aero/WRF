@@ -13,6 +13,8 @@ MODULE module_gen_act_disk
     
   SUBROUTINE gen_act_disk ( ru_tendf, rv_tendf, rw_tendf, &
                             wp_opt,                       & 
+                            windturb_spec,                & !RSA
+                            turb_loc_in_latlon,           & !RSA
                             n_turbines,                   &
                             n_timeseries,                 &
                             x_turbine,                    &
@@ -90,6 +92,12 @@ MODULE module_gen_act_disk
 
   INTEGER,                                       INTENT( IN  ) &  
   :: wp_opt  ! 
+
+  CHARACTER*256,                                 INTENT( IN  ) &
+  :: windturb_spec !RSA file for reading in turbine info
+
+  LOGICAL,                                       INTENT( IN  ) &
+  :: turb_loc_in_latlon !RSA flag for turbine location in lat/lon, else in meters
 
   REAL, DIMENSION( n_turbines ),                 INTENT(INOUT) &  !should be in if reading from aux file
   :: x_turbine      & ! x location of a turbine              (m)
@@ -270,7 +278,6 @@ MODULE module_gen_act_disk
   REAL                  :: radius
 
 ! RSA for reading in turbine info from file
-  CHARACTER*256        :: fname
   CHARACTER*512        :: inline
   INTEGER              :: istat
   REAL                 :: lat,lon,hubheight,diameter,bldlngth,thetaturb,cutin,cutout
@@ -327,10 +334,8 @@ MODULE module_gen_act_disk
   
   IF ( dum .EQ. 0.0 ) THEN
      !RSA for turbine info read from file (adapted from NM code)
-     CALL nl_get_windturb_spec(1, fname )
-
-     IF (TRIM(fname) .NE. 'none') THEN
-        OPEN(file=TRIM(fname),unit=19,FORM='FORMATTED',STATUS='OLD',IOSTAT=istat)
+     IF (TRIM(windturb_spec) .NE. 'none') THEN
+        OPEN(file=TRIM(windturb_spec),unit=19,FORM='FORMATTED',STATUS='OLD',IOSTAT=istat)
         IF ( istat .EQ. 0 ) THEN !no error in file open
            n = 0
            !count number of lines in file
@@ -417,6 +422,11 @@ MODULE module_gen_act_disk
         !   print*,'i angle ',i,theta_turbine(i)
         ! END DO
      ENDIF
+  ENDIF
+
+  !RSA convert x_turbine and y_turbine from lat/lon to x/y if need be
+  IF (turb_loc_in_latlon) THEN
+
   ENDIF
 
 !____________________________________________________________________________________________________________________________

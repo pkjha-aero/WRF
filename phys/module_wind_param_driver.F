@@ -131,6 +131,8 @@ SUBROUTINE wind_param_driver( grid, config_flags,           &
 
      CALL gen_act_disk ( ru_tendf, rv_tendf, rw_tendf,     & 
                          config_flags%wp_opt,              & 
+                         config_flags%windturb_spec,       & !RSA
+                         config_flags%turb_loc_in_latlon,  & !RSA
                          n_turbines,                       &
                          n_timeseries,                     &
                          x_turbine,                        &
