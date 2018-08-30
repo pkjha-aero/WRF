@@ -825,6 +825,7 @@ BENCH_START(wind_param_driver_tim)
                                   grid%rotor_diameter,                         &
                                   grid%blade_length,                           &
                                   grid%theta_turbine,                          &
+                                  grid%cutinspd, grid%cutoutspd,               & !RSA
                                   grid%acc_yaw_err,                            & 
                                   grid%wp_acc_u, grid%wp_acc_v, grid%wp_acc_w, &
                                   grid%wp_ts,                                  &

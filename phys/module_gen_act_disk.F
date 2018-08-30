@@ -1,6 +1,8 @@
 
 MODULE module_gen_act_disk
-  
+
+! USE module_wrf_error !RSA couldn't get to compile with this
+
 #ifdef DM_PARALLEL
   USE MODULE_DM
 #endif
@@ -19,6 +21,7 @@ MODULE module_gen_act_disk
                             rotor_diameter,               &
                             blade_length,                 &
                             theta_turbine,                &
+                            cutinspd, cutoutspd,          & !RSA
                             acc_yaw_err,                  & 
                             wp_acc_u, wp_acc_v, wp_acc_w, & ! these variables likely not needed. 
                             wp_ts,                        &
@@ -94,7 +97,9 @@ MODULE module_gen_act_disk
    , hub_height     & ! hub height                           (m)
    , rotor_diameter & ! hub height                           (m)
    , blade_length   & ! blade_length                         (m)
-   , theta_turbine    ! angle of rotor plane w.r.t. x axis (deg)
+   , theta_turbine  & ! angle of rotor plane w.r.t. x axis (deg)
+   , cutinspd       & ! turbine cutin speed                (m/s)
+   , cutoutspd        ! turbine cutout speed               (m/s)
 
   REAL, DIMENSION( n_turbines ),                 INTENT(INOUT) & 
   ::  acc_yaw_err
@@ -264,8 +269,14 @@ MODULE module_gen_act_disk
   REAL                  :: drut, drvt, drwt
   REAL                  :: radius
 
+! RSA for reading in turbine info from file
+  CHARACTER*256        :: fname
+  CHARACTER*512        :: inline
+  INTEGER              :: istat
+  REAL                 :: lat,lon,hubheight,diameter,bldlngth,thetaturb,cutin,cutout
+
 ! test
-   REAL :: zd, zetazd
+  REAL :: zd, zetazd
 
 !---------------------------------------------------------
 
@@ -287,9 +298,7 @@ MODULE module_gen_act_disk
 !____________________________________________________________________________________________________________________________
 
   hoff = 5.0 ! hub offset
-
   yaw_rate = 2.0 !degrees per second
-
   pitchdeg=  0.0
   dscale  =  1.0
   cscale  =  1.0
@@ -297,75 +306,117 @@ MODULE module_gen_act_disk
   blades  =  3
   rho     =  1.225
   start_fac = 1.0
-
   yaw_thresh = 10000.0 !10.0*60.0*10.0**2
-
   yaw_new = 0.0
-
   tilt_deg = 4.0 ! in degrees
-
   tilt = tilt_deg*pi/180.0
- 
   cdh = 0.0! 1.0
   cdt = 0.0!  1.2
-
-!JDM-04-2015  d_tower = 2.0 !m
-
+  !JDM-04-2015  d_tower = 2.0 !m
   Rtwrt = 1.5 !NM radius is say 1.5 meters
   Rtwrb = 2.0 !NM radius of tower at base
+  !print*,'n_timeseries',n_timeseries
 
-!  print*,'n_timeseries',n_timeseries
-
-  dum = 0.0                         ! Startup
+  !RSA if this is the first timestep, then read in turbine info 
+  !from file or hard coded values
+  dum = 0.0
   DO k = 1,n_timeseries
       dum = dum + v0t(k,1)
   ENDDO
+  ! print*,'dum',dum
+  
+  IF ( dum .EQ. 0.0 ) THEN
+     !RSA for turbine info read from file (adapted from NM code)
+     CALL nl_get_windturb_spec(1, fname )
 
-!print*,'dum',dum
+     IF (TRIM(fname) .NE. 'none') THEN
+        OPEN(file=TRIM(fname),unit=19,FORM='FORMATTED',STATUS='OLD',IOSTAT=istat)
+        IF ( istat .EQ. 0 ) THEN !no error in file open
+           n = 0
+           !count number of lines in file
+           DO WHILE (.true.)
+              READ(19,'(A256)',END=30) inline !RSA read file and goto 30 if end of file
+              IF ( index(inline,'!') .EQ. 0 ) n = n + 1
+           ENDDO
 
-   IF ( dum .LT. 0.0001 ) THEN !
+30         CONTINUE !RSA reached end of file
+           IF (n_turbines .NE. n) THEN
+              print*,'RSA n_turbines in namelist does not match number of turbines in file windturb_spec'
+              STOP
+              ! CALL wrf_error_fatal('RSA n_turbines in namelist does not match number of turbines in file windturb_spec')
+           ENDIF
 
-!turb_xy_locs( 1) = 200.1
-!turb_xy_locs( 2) = 400.1
-!turb_xy_locs( 3) = 600.1
-!turb_xy_locs( 4) = 800.1
-!turb_xy_locs( 5) = 1000.1
-!turb_xy_locs( 6) = 1200.1
-!turb_xy_locs( 7) = 1400.1
-!turb_xy_locs( 8) = 1600.1
-!turb_xy_locs( 9) = 1800.1
-!turb_xy_locs(10) = 2000.1
-!
-!sgn = 1
-!
-!    DO i = 1,10
-!
-!    DO j = 1,10
-!
-!      x_turbine(sgn)      = turb_xy_locs(i)
-!      y_turbine(sgn)      = turb_xy_locs(j)
-!      hub_height(sgn)     = 80.0  
-!      rotor_diameter(sgn) = 101.0 
-!      blade_length(sgn)   = 49.0  
-!      theta_turbine(sgn)  = (360.0/100.0)*(sgn-1)
-!
-!      sgn = sgn + 1
-!
-!    END DO
-!
-!    END DO
-!
-!    DO i = 1,100
-!      print*,'i angle ',i,theta_turbine(i)
-!    END DO
+           REWIND(19) !RSA go back to beginning of file
+           print*,'RSA reading input file windturb_spec for ',n,' turbines'
+           i = 1
+           DO WHILE (.true.)
+              READ(19,'(A256)',END=120) inline !RSA read file and goto 120 if end of file
+              IF ( i .LE. n_turbines .AND. index(inline,'!') .EQ. 0 ) THEN
+                 !RSA read in each part of the line seperated by spaces and go to line 130 if there is an error
+                 READ(inline,*,ERR=130) lat,lon,hubheight,diameter,bldlngth,thetaturb,cutin,cutout 
+                 x_turbine(i) = lon   
+                 y_turbine(i) = lat
+                 hub_height(i) = hubheight
+                 rotor_diameter(i) = diameter
+                 blade_length(i) = bldlngth
+                 theta_turbine(i) = thetaturb
+                 cutinspd(i) = cutin
+                 cutoutspd(i) = cutout
+                 i = i + 1 !RSA counting lines
+              ENDIF
+           ENDDO
 
-    x_turbine(1)      = 500.0 
-    y_turbine(1)      = 500.0
-    hub_height(1)     = 80.0  
-    rotor_diameter(1) = 77.0 
-    blade_length(1)   = 38.5*(1.0-0.0444) !PSU1.5 turbine
-    theta_turbine(1)  = 0.0 
+120	     CONTINUE !RSA reached end of file
+           CLOSE(19)
+           GOTO 150
 
+130	     CONTINUE !RSA error so close file and set istat to nonzero
+           CLOSE(19)
+           istat = 150150
+           GOTO 150
+
+150        CONTINUE
+        ELSE
+           print*,'RSA UNABLE TO OPEN OR READ TURBINE FILE'
+           ! CALL wrf_error_fatal('RSA UNABLE TO OPEN OR READ TURBINE FILE')
+        ENDIF
+     ELSE 
+        !RSA for hard coded turbine info
+        PRINT*,"RSA NO TURBINE FILE SPECIFIED, USING HARD CODED TURBINE LOCATION."
+        x_turbine(1)      = 500.0 
+        y_turbine(1)      = 500.0
+        hub_height(1)     = 80.0  
+        rotor_diameter(1) = 77.0 
+        blade_length(1)   = 38.5*(1.0-0.0444) !PSU1.5 turbine
+        theta_turbine(1)  = 0.0
+
+        !JDM for hard coded turbine info
+        !turb_xy_locs( 1) = 200.1
+        !turb_xy_locs( 2) = 400.1
+        !turb_xy_locs( 3) = 600.1
+        !turb_xy_locs( 4) = 800.1
+        !turb_xy_locs( 5) = 1000.1
+        !turb_xy_locs( 6) = 1200.1
+        !turb_xy_locs( 7) = 1400.1
+        !turb_xy_locs( 8) = 1600.1
+        !turb_xy_locs( 9) = 1800.1
+        !turb_xy_locs(10) = 2000.1
+        ! sgn = 1
+        ! DO i = 1,10
+        ! DO j = 1,10
+        !   x_turbine(sgn)      = turb_xy_locs(i)
+        !   y_turbine(sgn)      = turb_xy_locs(j)
+        !   hub_height(sgn)     = 80.0  
+        !   rotor_diameter(sgn) = 101.0 
+        !   blade_length(sgn)   = 49.0  
+        !   theta_turbine(sgn)  = (360.0/100.0)*(sgn-1)
+        !   sgn = sgn + 1
+        ! END DO
+        ! END DO
+        ! DO i = 1,100
+        !   print*,'i angle ',i,theta_turbine(i)
+        ! END DO
+     ENDIF
   ENDIF
 
 !____________________________________________________________________________________________________________________________
@@ -556,7 +607,7 @@ MODULE module_gen_act_disk
 ! Each processor must send and receive, so we cannot put this in a turbine_on_patch loop. 
 !____________________________________________________________________________________________________________________________
 
-! shift wind speed for each turbine (column ov v0t) back by one unit to make room
+! shift wind speed for each turbine (column of v0t) back by one unit to make room
 ! for the current v0 value 
 
   IF ( itimestep .le. 1) THEN
