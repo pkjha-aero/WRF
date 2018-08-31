@@ -734,7 +734,8 @@ module_wind_param_driver.o: \
 	 	../share/module_bc.o \
 		module_gen_act_disk.o	
 
-module_gen_act_disk.o: 
+module_gen_act_disk.o: \
+		../share/module_llxy.o
 
 module_diag_misc.o: \
 		../frame/module_dm.o

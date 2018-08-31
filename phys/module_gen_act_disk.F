@@ -1,13 +1,14 @@
 
 MODULE module_gen_act_disk
 
+USE module_llxy !RSA for converting lat/lon to x/y
 ! USE module_wrf_error !RSA couldn't get to compile with this
 
 #ifdef DM_PARALLEL
   USE MODULE_DM
 #endif
   
-  real, parameter :: pi=3.14159265359
+! real, parameter :: pi=3.14159265359 !RSA dont need this with module_llxy
   
   CONTAINS
     
@@ -33,6 +34,9 @@ MODULE module_gen_act_disk
                             muu, muv, mut,                &
                             rdzw,  dx, dy, dt,            &
                             v0t, d0t, itimestep,          &
+                            truelat1, truelat2,           & !RSA
+                            stdlon,                       & !RSA
+                            xlat_v, xlong_u,              & !RSA
                             ids, ide, jds, jde, kds, kde, &
                             ims, ime, jms, jme, kms, kme, &
                             ips, ipe, jps, jpe, kps, kpe, &
@@ -98,6 +102,12 @@ MODULE module_gen_act_disk
 
   LOGICAL,                                       INTENT( IN  ) &
   :: turb_loc_in_latlon !RSA flag for turbine location in lat/lon, else in meters
+
+  REAL,                                          INTENT( IN  ) &
+  :: truelat1, truelat2, stdlon !RSA for converting lat/lon to x/y
+
+  REAL, DIMENSION( ims:ime, jms:jme ),           INTENT( IN  ) &
+  :: xlat_v, xlong_u !RSA for converting lat/lon to x/y
 
   REAL, DIMENSION( n_turbines ),                 INTENT(INOUT) &  !should be in if reading from aux file
   :: x_turbine      & ! x location of a turbine              (m)
@@ -282,6 +292,10 @@ MODULE module_gen_act_disk
   INTEGER              :: istat
   REAL                 :: lat,lon,hubheight,diameter,bldlngth,thetaturb,cutin,cutout
 
+! RSA for converting lat/lon to x/y
+  TYPE(proj_info)      :: proj
+  REAL                 :: lat1,lon1,knowni,knownj,xnew,ynew !,truelat1,truelat2,stdlon
+
 ! test
   REAL :: zd, zetazd
 
@@ -426,7 +440,21 @@ MODULE module_gen_act_disk
 
   !RSA convert x_turbine and y_turbine from lat/lon to x/y if need be
   IF (turb_loc_in_latlon) THEN
+     ! truelat1 = 36.585
+     ! truelat2 = 36.585
+     ! stdlon = -97.760
+     lat1 = xlat_v(ids,jds)
+     lon1 = xlong_u(ids,jds)
+     knowni = 0.0
+     knownj = 0.0
 
+     !First argument should match projection used in namelist.wps (see share/module_llxy.F for more info)
+     CALL map_set(proj_code=PROJ_LC,proj=proj,lat1=lat1,lon1=lon1,knowni=knowni,knownj=knownj,dx=dx,stdlon=stdlon,truelat1=truelat1,truelat2=truelat2)
+     DO n = 1, n_turbines
+        CALL latlon_to_ij(proj,y_turbine(n),x_turbine(n),xnew,ynew)
+        x_turbine(n) = xnew
+        y_turbine(n) = ynew
+     ENDDO
   ENDIF
 
 !____________________________________________________________________________________________________________________________
