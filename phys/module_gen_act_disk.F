@@ -34,8 +34,8 @@ USE module_llxy !RSA for converting lat/lon to x/y
                             muu, muv, mut,                &
                             rdzw,  dx, dy, dt,            &
                             v0t, d0t, itimestep,          &
-                            truelat1, truelat2,           & !RSA
-                            stdlon,                       & !RSA
+                            ! truelat1, truelat2,           & !RSA
+                            ! stdlon,                       & !RSA
                             xlat_v, xlong_u,              & !RSA
                             ids, ide, jds, jde, kds, kde, &
                             ims, ime, jms, jme, kms, kme, &
@@ -103,8 +103,8 @@ USE module_llxy !RSA for converting lat/lon to x/y
   LOGICAL,                                       INTENT( IN  ) &
   :: turb_loc_in_latlon !RSA flag for turbine location in lat/lon, else in meters
 
-  REAL,                                          INTENT( IN  ) &
-  :: truelat1, truelat2, stdlon !RSA for converting lat/lon to x/y
+  ! REAL,                                          INTENT( IN  ) &
+  ! :: truelat1, truelat2, stdlon !RSA for converting lat/lon to x/y
 
   REAL, DIMENSION( ims:ime, jms:jme ),           INTENT( IN  ) &
   :: xlat_v, xlong_u !RSA for converting lat/lon to x/y
@@ -294,7 +294,7 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
 ! RSA for converting lat/lon to x/y
   TYPE(proj_info)      :: proj
-  REAL                 :: lat1,lon1,knowni,knownj,xnew,ynew !,truelat1,truelat2,stdlon
+  REAL                 :: lat1,lon1,knowni,knownj,xnew,ynew,truelat1,truelat2,stdlon
 
 ! test
   REAL :: zd, zetazd
@@ -343,10 +343,12 @@ USE module_llxy !RSA for converting lat/lon to x/y
   dum = 0.0
   DO k = 1,n_timeseries
       dum = dum + v0t(k,1)
+      ! print*,'k=',k,'v0t(k)=',v0t(k,1)
   ENDDO
   ! print*,'dum',dum
   
-  IF ( dum .EQ. 0.0 ) THEN
+  ! IF ( dum .EQ. 0.0 ) THEN
+  IF ( itimestep .LE. 1 ) THEN
      !RSA for turbine info read from file (adapted from NM code)
      IF (TRIM(windturb_spec) .NE. 'none') THEN
         OPEN(file=TRIM(windturb_spec),unit=19,FORM='FORMATTED',STATUS='OLD',IOSTAT=istat)
@@ -395,6 +397,7 @@ USE module_llxy !RSA for converting lat/lon to x/y
            GOTO 150
 
 150        CONTINUE
+           print*,'RSA finished reading input file'
         ELSE
            print*,'RSA UNABLE TO OPEN OR READ TURBINE FILE'
            ! CALL wrf_error_fatal('RSA UNABLE TO OPEN OR READ TURBINE FILE')
@@ -402,12 +405,12 @@ USE module_llxy !RSA for converting lat/lon to x/y
      ELSE 
         !RSA for hard coded turbine info
         PRINT*,"RSA NO TURBINE FILE SPECIFIED, USING HARD CODED TURBINE LOCATION."
-        x_turbine(1)      = 500.0 
-        y_turbine(1)      = 500.0
+        x_turbine(1)      = 1000.0 
+        y_turbine(1)      = 1000.0
         hub_height(1)     = 80.0  
         rotor_diameter(1) = 77.0 
         blade_length(1)   = 38.5*(1.0-0.0444) !PSU1.5 turbine
-        theta_turbine(1)  = 0.0
+        theta_turbine(1)  = 180.0
 
         !JDM for hard coded turbine info
         !turb_xy_locs( 1) = 200.1
@@ -435,27 +438,52 @@ USE module_llxy !RSA for converting lat/lon to x/y
         ! DO i = 1,100
         !   print*,'i angle ',i,theta_turbine(i)
         ! END DO
+     ENDIF !RSA end read file or not
+
+     !RSA convert x_turbine and y_turbine from lat/lon to x/y if need be
+     IF (turb_loc_in_latlon) THEN
+
+#ifdef DM_PARALLEL
+        !Get lat/lon of origin (southwest corner) of domain, which is on 
+        !master proc (ie mytask=0). Then broadcast to all other procs.
+        IF (mytask .EQ. master) THEN
+           lat1 = xlat_v(its,jts)
+           lon1 = xlong_u(its,jts)
+        ENDIF
+
+        CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+        CALL MPI_BCAST(lat1,1,MPI_REAL,master,MPI_COMM_WORLD,ierr)
+        CALL MPI_BCAST(lon1,1,MPI_REAL,master,MPI_COMM_WORLD,ierr)
+#endif
+
+        truelat1 = 36.585
+        truelat2 = 36.585
+        stdlon = -97.760
+        knowni = 0.0
+        knownj = 0.0
+
+        !First argument should match projection used in namelist.wps (see share/module_llxy.F for more info)
+        CALL map_set(proj_code=PROJ_LC,proj=proj,lat1=lat1,lon1=lon1, &
+                     knowni=knowni,knownj=knownj,dx=dx,stdlon=stdlon, &
+                     truelat1=truelat1,truelat2=truelat2)
+
+        DO n = 1, n_turbines
+           CALL latlon_to_ij(proj,y_turbine(n),x_turbine(n),xnew,ynew)
+           x_turbine(n) = xnew*dx
+           y_turbine(n) = ynew*dy !RSA dx and dy should be equal
+        ENDDO
+
+        print*,'y_turbine=',y_turbine(1)
+        print*,'x_turbine=',x_turbine(1)
+        print*,'lat1=',lat1
+        print*,'lon1=',lon1
+        print*,'dx=',dx
+        print*,'stdlon=',stdlon
+        print*,'truelat1=',truelat1
+        print*,'truelat2=',truelat2
+
      ENDIF
-  ENDIF
-
-  !RSA convert x_turbine and y_turbine from lat/lon to x/y if need be
-  IF (turb_loc_in_latlon) THEN
-     ! truelat1 = 36.585
-     ! truelat2 = 36.585
-     ! stdlon = -97.760
-     lat1 = xlat_v(ids,jds)
-     lon1 = xlong_u(ids,jds)
-     knowni = 0.0
-     knownj = 0.0
-
-     !First argument should match projection used in namelist.wps (see share/module_llxy.F for more info)
-     CALL map_set(proj_code=PROJ_LC,proj=proj,lat1=lat1,lon1=lon1,knowni=knowni,knownj=knownj,dx=dx,stdlon=stdlon,truelat1=truelat1,truelat2=truelat2)
-     DO n = 1, n_turbines
-        CALL latlon_to_ij(proj,y_turbine(n),x_turbine(n),xnew,ynew)
-        x_turbine(n) = xnew
-        y_turbine(n) = ynew
-     ENDDO
-  ENDIF
+  ENDIF !RSA end first timestep
 
 !____________________________________________________________________________________________________________________________
 !
@@ -700,7 +728,8 @@ USE module_llxy !RSA for converting lat/lon to x/y
         imin = minloc(abs(u_x(i_start:i_end)-x_turbine(n)),1)+i_start-1 !Using u-locations for no reason other than convenience
         jmin = minloc(abs(u_y(j_start:j_end)-y_turbine(n)),1)+j_start-1
      
-        imin = imin-6 ! 1D Upstream
+        ! imin = imin-6 ! 1D Upstream
+        imin = imin + 2 !RSAtest
 
         IF (imin .LT. its ) THEN
 

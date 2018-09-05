@@ -151,8 +151,8 @@ SUBROUTINE wind_param_driver( grid, config_flags,           &
                          muu, muv, mut,                    & 
                          rdzw, dx, dy, dt,                 & !JDM May 2, 2013
                          v0t, d0t, itimestep,              & !JDM May 2, 2013
-                         grid%truelat1, grid%truelat2,     & !RSA
-                         grid%stand_lon,                   & !RSA
+                         ! grid%truelat1, grid%truelat2,     & !RSA
+                         ! grid%stand_lon,                   & !RSA
                          grid%xlat_v, grid%xlong_u,        & !RSA
                          ids, ide, jds, jde, kds, kde,     &
                          ims, ime, jms, jme, kms, kme,     &
