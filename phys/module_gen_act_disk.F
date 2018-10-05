@@ -2,7 +2,6 @@
 MODULE module_gen_act_disk
 
 USE module_llxy !RSA for converting lat/lon to x/y
-! USE module_wrf_error !RSA couldn't get to compile with this
 
 #ifdef DM_PARALLEL
   USE MODULE_DM
@@ -336,7 +335,6 @@ USE module_llxy !RSA for converting lat/lon to x/y
   !JDM-04-2015  d_tower = 2.0 !m
   Rtwrt = 1.5 !NM radius is say 1.5 meters
   Rtwrb = 2.0 !NM radius of tower at base
-  !print*,'n_timeseries',n_timeseries
 
   !RSA if this is the first timestep, then read in turbine info 
   !from file or hard coded values
@@ -451,26 +449,31 @@ USE module_llxy !RSA for converting lat/lon to x/y
            lon1 = xlong_u(its,jts)
         ENDIF
 
-        CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
+        CALL MPI_BARRIER(MPI_COMM_WORLD,ierr) !RSA not sure if this is needed, or if it should be before or after BCAST
         CALL MPI_BCAST(lat1,1,MPI_REAL,master,MPI_COMM_WORLD,ierr)
         CALL MPI_BCAST(lon1,1,MPI_REAL,master,MPI_COMM_WORLD,ierr)
 #endif
 
-        truelat1 = 36.585
-        truelat2 = 36.585
-        stdlon = -97.760
-        knowni = 0.0
-        knownj = 0.0
-
-        !First argument should match projection used in namelist.wps (see share/module_llxy.F for more info)
+        !RSA parameters for map_set. This function defines the structure 'proj'
+        !which is used below in latlon_to_ij. proj_code should be set to match
+        !the projection used in namelist.wps (see share/module_llxy.F for more info)
+        truelat1 = 36.585 !RSA from namelist.wps
+        truelat2 = 36.585 !RSA from namelist.wps
+        stdlon = -97.760 !RSA from namelist.wps
+        knowni = 0.0 !RSA always 0 (origin)
+        knownj = 0.0 !RSA always 0 (origin)
         CALL map_set(proj_code=PROJ_LC,proj=proj,lat1=lat1,lon1=lon1, &
                      knowni=knowni,knownj=knownj,dx=dx,stdlon=stdlon, &
                      truelat1=truelat1,truelat2=truelat2)
 
         DO n = 1, n_turbines
-           CALL latlon_to_ij(proj,y_turbine(n),x_turbine(n),xnew,ynew)
-           x_turbine(n) = xnew*dx
-           y_turbine(n) = ynew*dy !RSA dx and dy should be equal
+           CALL latlon_to_ij(proj,y_turbine(n),x_turbine(n),inew,jnew)
+           !RSA inew and jnew are REAL indices from the origin (knowni,knownj),
+           !which is at the southwest corner of the domain.
+           !Multiplying by dx and dy gives the distance on the grid from the
+           !origin to the given point.
+           x_turbine(n) = inew*dx
+           y_turbine(n) = jnew*dy
         ENDDO
 
         print*,'y_turbine=',y_turbine(1)
@@ -495,9 +498,6 @@ USE module_llxy !RSA for converting lat/lon to x/y
   j_start = jts
   j_end   = MIN(jte,jde-1)
 
-!print*,'i_start, i_end',i_start,i_end
-!print*,'j_start, j_end',j_start,j_end
-
   dxo2 = dx/2.0
   dyo2 = dy/2.0
 
@@ -509,40 +509,28 @@ USE module_llxy !RSA for converting lat/lon to x/y
   END DO
   END DO
 
-!print*,'i,u_x(i)'
   DO i = i_start, i_end+1
- 
     u_x(i) = (i-1)*dx
     v_x(i) = dxo2 + u_x(i)
     w_x(i) = v_x(i)
-
-!print*,i,u_x(i)
-
   END DO
 
-!print*,'j,v_y(j)'
-
   DO j = j_start, j_end+1
- 
     v_y(j) = (j-1)*dy
     u_y(j) = dyo2 + v_y(j)
     w_y(j) = u_y(j)
-
-!print*,j,v_y(j)
-
   END DO
 
-  turbine_on_patch = 0
-
-
-  DO n = 1, n_turbines
 !____________________________________________________________________________________________________________________________
 !
 ! 2. If some part of the turbine is on this patch, compute the height dependent gridpoint position variables
 !____________________________________________________________________________________________________________________________
 
-!--------- Define if turbine falls within tile neighborhood
-  
+  turbine_on_patch = 0
+
+  DO n = 1, n_turbines
+
+    !Define if turbine falls within tile neighborhood
     xmin_tile=u_x(i_start)
     xmax_tile=u_x(i_end+1)
     ymin_tile=v_y(j_start)
@@ -553,98 +541,73 @@ USE module_llxy !RSA for converting lat/lon to x/y
     ymin_turb = y_turbine(n) - rotor_diameter(n)
     ymax_turb = y_turbine(n) + rotor_diameter(n)
 
-!print*,'xmin_turb,xmax_turb,ymin_turb,ymax_turb ',xmin_turb,xmax_turb,ymin_turb,ymax_turb
-
-!-- If turbine rectangle overlaps with tile do the following
-!   the if statement actually checks if there is no overlap
-
+    !If turbine rectangle overlaps with tile do the following
+    !the if statement actually checks if there is no overlap
     IF ( .NOT. ( (xmax_tile .LT. xmin_turb) .OR.              &  
                  (xmin_tile .GE. xmax_turb) .OR.              &   !changed from GT
                  (ymax_tile .LT. ymin_turb) .OR.              &  
                  (ymin_tile .GE. ymax_turb) )         ) THEN      !changed from GT
 
- 
-!   print*,'------------------itimestep------------------',itimestep
-
       turbine_on_patch = 1
 
       DO j = j_start-1, j_end+1   
         DO i = i_start-1, i_end+1
-
            w_z(i,kts,j)=0.0
-
         END DO
       END DO
   
       zmax_turb = hub_height(n) + rotor_diameter(n)*0.5                                      
 
       DO k = kts+1,kte             ! compute 1D column of z-values to determine k_end for the tile
-
         w_z(i_start,k,j_start) = w_z(i_start,k-1,j_start) + 1.0/rdzw(i_start,k-1,j_start)
-
       END DO
         
       DO k=kts+1,kte-1             ! k_end = 1 index greater to allow for nonuniform heights within the tile
-
         IF ( (w_z(i_start,k-1,j_start) .LT. zmax_turb) .AND.    &
              (w_z(i_start,k,j_start) .GE. zmax_turb)         ) THEN
-
           k_end=k+1
-
         ENDIF
-
       ENDDO 
 
       DO j = j_start, j_end        ! compute the rest of w_z up to k_end
         DO k = kts+1, k_end+1
           DO i = i_start, i_end
-
             w_z(i,k,j) = w_z(i,k-1,j) + 1.0/rdzw(i,k-1,j)
-
           END DO
         END DO
       END DO
 
       DO j = j_start, j_end         ! compute the i_start and i_end ghost nodes
         DO k = kts+1, k_end+1
-
           w_z(i_start-1,k,j)=w_z(i_start,k,j)
           w_z(i_end+1,k,j)=w_z(i_end,k,j)
-
         END DO
       END DO
 
       DO k = kts+1, k_end+1           ! compute the j_start and j_end ghost nodes
         DO i = i_start, i_end  
-
           w_z(i,k,j_start-1) = w_z(i,k,j_start)
           w_z(i,k,j_end+1) = w_z(i,k,j_end)
-
         END DO
       END DO
 
       DO k = kts+1, k_end+1           ! compute get the corner ghost nodes
-
         w_z(i_start-1,k,j_start-1)=0.5*(w_z(i_start-1,k,j_start) + &
-                                       w_z(i_start,k,j_start-1) )
+                                        w_z(i_start,k,j_start-1) )
         w_z(i_start-1,k,j_end+1)=0.5*(w_z(i_start-1,k,j_end) +     &
-                                        w_z(i_start,k,j_start+1) )
+                                      w_z(i_start,k,j_start+1) )
         w_z(i_end+1,k,j_start-1)=0.5*(w_z(i_end+1,k,j_start) +     &
-                                    w_z(i_end,k,j_start-1) ) 
+                                      w_z(i_end,k,j_start-1) ) 
         w_z(i_end+1,k,j_end+1)=0.5*(w_z(i_end+1,k,j_end) +     &
-                                  w_z(i_end,k,j_end+1) ) 
-
+                                    w_z(i_end,k,j_end+1) ) 
       END DO
 
       DO j = j_start, j_end           ! compute u_z and v_z up to k_end
         DO k = kts, k_end
           DO i = i_start, i_end+1
-
-! 0.5 for averaging in horizontal, 0.5 for averaging in vertical
-
+            ! 0.5 for averaging in horizontal, 0.5 for averaging in vertical
             u_z(i,k,j) = 0.5*(   0.5*( w_z(i-1,k+1,j) + w_z(i,k+1,j) )   &
                                + 0.5*( w_z(i-1,k,j)   + w_z(i,k,j)   ) )
-
           END DO
         END DO
       END DO
@@ -652,18 +615,14 @@ USE module_llxy !RSA for converting lat/lon to x/y
       DO j = j_start, j_end+1           ! compute u_z and v_z up to k_end
         DO k = kts, k_end
           DO i = i_start, i_end
-
-! 0.5 for averaging in horizontal, 0.5 for averaging in vertical
-     
+            ! 0.5 for averaging in horizontal, 0.5 for averaging in vertical
             v_z(i,k,j) = 0.5*(   0.5*( w_z(i,k+1,j-1) + w_z(i,k+1,j) )   &
                                + 0.5*( w_z(i,k,j-1)   + w_z(i,k,j)   ) )
-
           END DO
         END DO
       END DO
 
     END IF ! turbine neighborhood is on patch
-
   END DO ! n_turbines
 
 !____________________________________________________________________________________________________________________________
@@ -677,16 +636,9 @@ USE module_llxy !RSA for converting lat/lon to x/y
 ! for the current v0 value 
 
   IF ( itimestep .le. 1) THEN
-
     v0t = 0.0
     d0t = 0.0
     acc_yaw_err = 0.0
-
-!    start_time = 1
-!    n_mins_startup = 1.0
-!    nt = ceiling( n_mins_startup*60.0/dt )
-!    start_fac = MIN(float(itimestep - start_time)/float(nt),1.0) !Apply turbine forces gradually at startup
-
   ENDIF
 
   DO n = 1, n_turbines
@@ -696,35 +648,25 @@ USE module_llxy !RSA for converting lat/lon to x/y
   ENDDO
 
   IF (wp_opt .EQ. 3 ) THEN
-
     DO n = 1, n_turbines
       DO k = n_timeseries-1,1,-1
         d0t(k+1,n)=d0t(k,n)
       ENDDO
     ENDDO
-
   ENDIF
 
   DO n = 1, n_turbines
-
     IF (turbine_on_patch .EQ. 1 ) THEN ! 
-
       xmin_tile = u_x(i_start)
       xmax_tile = u_x(i_end+1)
       ymin_tile = v_y(j_start)
       ymax_tile = v_y(j_end+1)
-
       theta =  theta_turbine(n)*pi/180.0
 
-!-- If turbine hub is within the tile do the following
-
+      !If turbine hub is within the tile do the following
       IF ( (x_turbine(n) .GE. xmin_tile) .AND. (x_turbine(n) .LT. xmax_tile) .AND. &
            (y_turbine(n) .GE. ymin_tile) .AND. (y_turbine(n) .LT. ymax_tile) ) THEN
   
-!      print*,'turbine hub n on patch mytask',n,mytask
-!      print*,'xmin_tile,xmax_tile',xmin_tile,xmax_tile
-!      print*,'ymin_tile,ymax_tile',ymin_tile,ymax_tile
-
         imin = minloc(abs(u_x(i_start:i_end)-x_turbine(n)),1)+i_start-1 !Using u-locations for no reason other than convenience
         jmin = minloc(abs(u_y(j_start:j_end)-y_turbine(n)),1)+j_start-1
      
@@ -732,46 +674,29 @@ USE module_llxy !RSA for converting lat/lon to x/y
         imin = imin + 2 !RSAtest
 
         IF (imin .LT. its ) THEN
-
           print*,'imin < its in phys/module_gen_act_disk.F, stopping'
-
           STOP
-
         ENDIF
 
         DO k = kts+1, k_end
-
           turb_z(k) = u_z(imin,k,jmin) - hub_height(n)
-
         END DO
 
         kmin=minloc(abs(turb_z(kts+1:k_end)),1)+kts
-
         v0inst = u(imin,kmin,jmin)*cos(theta)*cos(tilt)+v(imin,kmin,jmin)*sin(theta)*cos(tilt) !Instantaneous velocity component normal to the rotor.
-                                                                       !Negative indicates flow coming from behind the rotor.
 
         IF (wp_opt .EQ. 3 ) THEN
-
           IF ( ( u(imin,kmin,jmin) .GE. 0.0 ) .AND. ( v(imin,kmin,jmin) .LT. 0.0 ) ) THEN    !Wind direction, independent of the
              d0inst = 360.0 - (atan2(u(imin,kmin,jmin),v(imin,kmin,jmin) )*180.0/pi - 90.0)  !rotor angle. 0 and 360 are Westerly. 
           ELSE                                                                               !Positive values are counterclockwise
              d0inst = 90.0 - atan2(u(imin,kmin,jmin),v(imin,kmin,jmin) )*180.0/pi            !up to 360. No negative values.
           ENDIF
-
-!        print*,'imin,jmin,u,v ',imin,jmin,u(imin,kmin,jmin),v(imin,kmin,jmin)
-!        print*,'v0inst, d0inst',v0inst,d0inst
-!        print*,'n u ,v',n, u(imin,kmin,jmin),v(imin,kmin,jmin) 
-!        print*,'n v0inst,d0inst',n,v0inst,d0inst 
-
         ENDIF    
 
 #ifdef DM_PARALLEL
-
         tag=n
-
         CALL MPI_SEND(v0inst,1,MPI_REAL,master,tag,            &
                              MPI_COMM_WORLD,ierr )
-
         IF (wp_opt .EQ. 3 ) THEN
           CALL MPI_SEND(d0inst,1,MPI_REAL,master,tag,            &
                                  MPI_COMM_WORLD,ierr )
@@ -784,94 +709,59 @@ USE module_llxy !RSA for converting lat/lon to x/y
 #endif
 
       ENDIF ! hub is on the tile
-
     ENDIF ! Part of turbine is on this patch,
-
   END DO ! n_turbines
 
 #ifdef DM_PARALLEL
-
   IF ( mytask .eq. master ) THEN
-
     DO n=1,n_turbines
-
       tag=n
       CALL MPI_RECV(v0inst,1,MPI_REAL,MPI_ANY_SOURCE,tag,                 &
                              MPI_COMM_WORLD,MPI_STATUS_IGNORE,ierr )
       v0n(n)=v0inst
-
     ENDDO
 
     IF (wp_opt .EQ. 3 ) THEN
-
       DO n=1,n_turbines
-
         tag=n
         CALL MPI_RECV(d0inst,1,MPI_REAL,MPI_ANY_SOURCE,tag,                 &
                                MPI_COMM_WORLD,MPI_STATUS_IGNORE,ierr )
         d0n(n)=d0inst
-
       ENDDO
-
     ENDIF
-
-  ENDIF ! turbine on patch
+  ENDIF
 
   CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
-
   CALL MPI_BCAST(v0n,n_turbines,MPI_REAL,master,MPI_COMM_WORLD,ierr)
-
   IF (wp_opt .EQ. 3 ) THEN
     CALL MPI_BCAST(d0n,n_turbines,MPI_REAL,master,MPI_COMM_WORLD,ierr)
   ENDIF
-
 #endif 
-
-! Check to make sure namelist values of ntme_turb and n_turbines are consistent
-!  nv0t=size(v0t,1)
-!  IF ( nv0t .NE. (n_timeseries/n_turbines) ) THEN 
-!    PRINT*,'nvot not equal to ntme_turb/n_turbines'
-!    STOP
-!  ENDIF
-
-  IF (turbine_on_patch .EQ. 1 ) THEN !only do this if part of the turbine is on the patch
 
 !____________________________________________________________________________________________________________________________
 !
 ! 4. Add current v0 to timeseries in v0t, compute current average, and calculate pitch and rpm
 !____________________________________________________________________________________________________________________________
-!
+
+  IF (turbine_on_patch .EQ. 1 ) THEN !only do this if part of the turbine is on the patch
+
     DO n = 1, n_turbines
-
-! cnsider skipping the following lines for a gradual startup
-
-!     IF ( sum(v0t(:,n)) .eq. 0. ) THEN !This is the first time the turbine has run
 
       dum = 0.0                         ! Looking for problems...
       DO k = 1,n_timeseries
         dum = dum + v0t(k,n)
       ENDDO
 
-      IF ( dum .eq. 0. ) THEN !
-
-!      print*,'n, here 1, sum(v0t(:,n)',n,dum
-
-!!!        v0t(:,n)=v0n(n)             ! Assign all rows (times) of each column (turbine number) the current v0 
-
+      !If this is the first time through the GAD routine,
+      !Assign all rows (times) of each column (turbine number) the current v0 and d0
+      IF ( dum .eq. 0. ) THEN  
         DO k = 1,n_timeseries          ! Looking for problems...
           v0t(k,n) = v0n(n)
           d0t(k,n) = d0n(n)
         ENDDO
-
-!!        IF (wp_opt .EQ. 3 ) THEN
-!          d0t(:,n)=d0n(n)   
-!!        ENDIF
-
       ENDIF 
 
       v0t(1,n)=v0n(n)                  ! Assign the first element the current v0 
-
-!!     v0 = sum(v0t(:,n))/real(n_timeseries)
 
       dum = 0.0                        ! Looking for problems...
       DO k = 1,n_timeseries
@@ -888,49 +778,27 @@ USE module_llxy !RSA for converting lat/lon to x/y
                                                         ! The turbine rotates at yaw_rate until it is less than 
                                                         ! yaw_rate*dt from yaw_new. At this point turbine_theta is
                                                         ! set to yaw_new, yawing is set to 0, and everything starts over.
-
           yawing(n) = 1
-       
         ELSE
-   
           yawing(n) = 0 
-
         ENDIF
 
-!        print*,'n,acc_yaw_err,yawing ',n,acc_yaw_err(n),yawing(n) 
-!        print*,'v0n(n),d0n(n)',v0n(n),d0n(n)
-
         IF (yawing(n) .EQ. 0 ) THEN
- 
+
           d0t(1,n)=d0n(n)
-
           delta = theta_turbine(n) - d0t(1,n)
-
           IF ( delta .LT. -180.0 ) THEN 
-
             delta = theta_turbine(n) + ( 360.0 - d0t(1,n) )
-  
           ELSE IF (delta .GE. 180.0 ) THEN 
-
             delta = theta_turbine(n) - ( 360.0 + d0t(1,n) )
-
           ENDIF
 
           sgn = 1.0
-
           IF ( delta .LT. 0.0 ) sgn = -1.0
- 
           yaw_err = sgn*(delta)*(delta)*dt
-
           acc_yaw_err(n) = acc_yaw_err(n) + yaw_err
-  
-!          print*,'delta,theta_turbine(n) ',delta,theta_turbine(n)
-
-!          print*,'------------------'
 
         ELSE ! turbine is yawing or ready to start
-
-!        yaw_new = sum(d0t(:,n))/real(n_timeseries)
 
          dum = 0.0
          DO k = 1,n_timeseries
@@ -938,50 +806,32 @@ USE module_llxy !RSA for converting lat/lon to x/y
          ENDDO
 
          yaw_new = dum/real(n_timeseries)
-
          yaw_inc = yaw_rate*dt
-
          delta = theta_turbine(n) - yaw_new  
-
          IF ( delta .LT. -180.0 ) THEN 
-
            delta = theta_turbine(n) + ( 360.0 - d0t(1,n) )
-  
          ELSE IF (delta .GE. 180.0 ) THEN 
-
            delta = theta_turbine(n) - ( 360.0 + d0t(1,n) )
-
          ENDIF
 
          sgn = 1.0
-
          IF ( delta .GT. 0.0 ) sgn = -1.0
 
          IF ( abs(yaw_inc) .GE. abs(delta) ) THEN 
-
            theta_turbine(n) = yaw_new
-
            yawing(n) = 0
-
            acc_yaw_err(n) = 0.0
-
          ELSE
-
            theta_turbine(n) = theta_turbine(n) + sgn*yaw_inc
-
          ENDIF
 
         ENDIF !yawing or not
 
         ! Keep turbine-theta between 0 and 360 degrees.
-
         IF ( theta_turbine(n) .GE. 360.0 ) theta_turbine(n) = theta_turbine(n) - 360.0
         IF ( theta_turbine(n) .LT. 0.0 ) theta_turbine(n) = 360.0 + theta_turbine(n)
 
       ENDIF !wp_opt .EQ. 3
-
-! Kosovic, December 14, 2012 - end modification
-!---------------------------------------------
 
       theta =  theta_turbine(n)*pi/180.0
 
@@ -994,30 +844,25 @@ USE module_llxy !RSA for converting lat/lon to x/y
    
       DO j = j_start, j_end
         DO i = i_start, i_end
-
            rotrate(i,j) = 2.0*pi*rpm/60.0
            thrust(i,j)  = 0.0
            torque(i,j)  = 0.0
            power(i,j)   = 0.0
-
         ENDDO
       ENDDO
 
-!--------end----added by B. Kosovic, NCAR, July 5, 2012
-!------------------------------------------------------
+      !____________________________________________________________________________________________________________________________
+      !
+      ! 5.  Compute distances from computational nodes to rotor place in order to 
+      !     ii) Smear forces as a function of distance in the axial direction
+      !____________________________________________________________________________________________________________________________
+      !
+      ! Compute distances from computational nodes to rotor place in order to 
+      !  ii) Smear forces as a function of distance in the axial direction
 
-!____________________________________________________________________________________________________________________________
-!
-! 5.  Compute distances from computational nodes to rotor place in order to 
-!     ii) Smear forces as a function of distance in the axial direction
-!____________________________________________________________________________________________________________________________
-!
-! Compute distances from computational nodes to rotor place in order to 
-!  ii) Smear forces as a function of distance in the axial direction
-
-! dau,dav,daw - Signed distance, in a horizontal plane, from the gridpoint to a line
-!               going through the turbine (nacelle) axis. 
-! dru,drv,drw - signed distance, in a horizontal plane, from the vertical rotor plane
+      ! dau,dav,daw - Signed distance, in a horizontal plane, from the gridpoint to a line
+      !               going through the turbine (nacelle) axis. 
+      ! dru,drv,drw - signed distance, in a horizontal plane, from the vertical rotor plane
 
       CALL calc_distance( x_turbine(n), y_turbine(n), theta_turbine(n), &
                           its, ite, jts, jte, &
@@ -1028,11 +873,9 @@ USE module_llxy !RSA for converting lat/lon to x/y
       DO j = j_start, j_end
         DO k = kts, k_end
           DO i = i_start, i_end
- 
             dzu(i,k,j) = u_z(i,k,j) - hub_height(n)
             dzv(i,k,j) = v_z(i,k,j) - hub_height(n)
             dzw(i,k,j) = w_z(i,k,j) - hub_height(n)
-
           END DO
         END DO
       END DO
@@ -1040,15 +883,12 @@ USE module_llxy !RSA for converting lat/lon to x/y
       DO j = j_start, j_end
         DO k = kts, k_end
           DO i = i_start, i_end
-
             ru(i,k,j) = sqrt(dau(i,j)**2+dzu(i,k,j)**2)
             rv(i,k,j) = sqrt(dav(i,j)**2+dzv(i,k,j)**2)
             rw(i,k,j) = sqrt(daw(i,j)**2+dzw(i,k,j)**2)
-              
             wp_acc_u(i,k,j) = 0.0
             wp_acc_v(i,k,j) = 0.0
             wp_acc_w(i,k,j) = 0.0
-
           END DO
         END DO
       END DO
@@ -1060,7 +900,6 @@ USE module_llxy !RSA for converting lat/lon to x/y
 !      sigma = sqrt(dx*dy)
 !      adenom = sigma*sqrt(2.0*pi)
 !      bdenom  = 2.0*sigma*sigma
-
       sigma   = (abs(dx*cos(theta))+abs(dy*sin(theta))) !NM so normal for rotor plane sqrt(dx*dy)	!!!This is the standard deviation
       adenom  = sigma*sqrt(2.0*pi)                  !want integral=1 for Gaussian ;accel will have units of 1/m
       bdenom  = 2.*sigma*sigma                      !!determines spread of gaussian
@@ -1072,60 +911,43 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
       radmin = rotor_diameter(n)/2.0 - blade_length(n)
 
-!____________________________________________________________________________________________________________________________
-!
-! 6. Compute local lift and drag accelerations using instantaneous local velocity, and apply to u,v, and w tendencies
-!____________________________________________________________________________________________________________________________
-
+      !____________________________________________________________________________________________________________________________
+      !
+      ! 6. Compute local lift and drag accelerations using instantaneous local velocity, and apply to u,v, and w tendencies
+      !____________________________________________________________________________________________________________________________
 
       DO j = j_start, j_end
-
         DO k = kts, k_end
-
           DO i = i_start, i_end
 
              v0 = u(i,k,j)*cos(theta)*cos(tilt) + v(i,k,j)*sin(theta)*cos(tilt) - w(i,k,j)*sin(tilt)  
 
-             IF (cdt .GT. 0.0 ) THEN !Tower------------------------------------------------------	
+             !Tower------------------------------------------------------	
+             IF (cdt .GT. 0.0 ) THEN
+                IF (dzu(i,k,j) .le. -(radmin)) then !NM tower below hub
+                   Rtwr = abs(dzu(i,k,j))*(Rtwrb-Rtwrt)/hub_height(n)+Rtwrt !NM linear	 
+                   IF ( abs( dau(i,j) ) .le. Rtwr) then !NM tower below hub; dau needs to be less than tower radius
+                   !JDM-04-201 Note to self. This should be fixed so that the tower is not grid location dependent. Same goes for the hub!
+                      fn = 0.5*rho*v0*v0*Cdt !NM force per unit area for tower
+                      ft = 0.0 !NM no tangential force
+                      acc_u = (1.0/adenom)*exp(-(dru(i,j)**2)/bdenom) !NM 1-D !Gaussian
+                      fx = fn*cos(theta) !NM to x direction
+                      ru_tendf(i,k,j) = ru_tendf(i,k,j) - muu(i,j)*acc_u*cnst*fx !NM
+                   END IF
+                END IF
 
-                    IF (dzu(i,k,j) .le. -(radmin)) then !NM tower below hub
-
-                        Rtwr = abs(dzu(i,k,j))*(Rtwrb-Rtwrt)/hub_height(n)+Rtwrt !NM linear	 
-
-                        IF ( abs( dau(i,j) ) .le. Rtwr) then !NM tower below hub; dau needs to be less than tower radius
-
-!JDM-04-201 Note to self. This should be fixed so that the tower is not grid location dependent. Same goes for the hub!
-
-                            fn = 0.5*rho*v0*v0*Cdt !NM force per unit area for tower
-                            ft = 0.0 !NM no tangential force
-                            acc_u = (1.0/adenom)*exp(-(dru(i,j)**2)/bdenom) !NM 1-D !Gaussian
-                            fx = fn*cos(theta) !NM to x direction
-
-                            ru_tendf(i,k,j) = ru_tendf(i,k,j) - muu(i,j)*acc_u*cnst*fx !NM
-
-                        END IF
-
-                     END IF
-
-                    IF (dzv(i,k,j) .le. -(radmin)) then !NM tower below hub
-
-                        Rtwr = abs(dzv(i,k,j))*(Rtwrb-Rtwrt)/hub_height(n)+Rtwrt !NM linear	 
-
-                        IF ( abs( dav(i,j) ) .le. Rtwr) then !NM tower below hub; dau needs to be less than tower radius
-
-!JDM-04-201 Note to self. This should be fixed so that the tower is not grid location dependent. Same goes for the hub!
-
-                            fn = 0.5*rho*v0*v0*Cdt !NM force per unit area for tower
-                            ft = 0.0 !NM no tangential force
-                            acc_v = (1.0/adenom)*exp(-(drv(i,j)**2)/bdenom) !NM 1-D !Gaussian
-                            fy = fn*sin(theta) !NM to x direction
-                            rv_tendf(i,k,j) = rv_tendf(i,k,j) - muv(i,j)*acc_v*cnst*fy !NM
-
-                        END IF
-
-                     END IF
-
-                ENDIF !cdt > 0
+                IF (dzv(i,k,j) .le. -(radmin)) then !NM tower below hub
+                   Rtwr = abs(dzv(i,k,j))*(Rtwrb-Rtwrt)/hub_height(n)+Rtwrt !NM linear	 
+                   IF ( abs( dav(i,j) ) .le. Rtwr) then !NM tower below hub; dau needs to be less than tower radius
+                   !JDM-04-201 Note to self. This should be fixed so that the tower is not grid location dependent. Same goes for the hub!
+                      fn = 0.5*rho*v0*v0*Cdt !NM force per unit area for tower
+                      ft = 0.0 !NM no tangential force
+                      acc_v = (1.0/adenom)*exp(-(drv(i,j)**2)/bdenom) !NM 1-D !Gaussian
+                      fy = fn*sin(theta) !NM to x direction
+                      rv_tendf(i,k,j) = rv_tendf(i,k,j) - muv(i,j)*acc_v*cnst*fy !NM
+                  END IF
+                END IF
+             ENDIF !cdt > 0
 
 !------ X ---- 
 
