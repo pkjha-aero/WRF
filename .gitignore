@@ -1,3 +1,5 @@
+configure.wrf
+configure.wrf.backup
 *.exe
 *.f90
 *.inc
@@ -9,3 +11,7 @@
 *.log
 tags
 tools/*
+external/*
+run/*
+tools/*
+test/*

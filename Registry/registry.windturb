@@ -13,8 +13,10 @@ state   real     wp_torque       ij        misc     1       -       h      "wp_t
 state   real     wp_rotrate      ij        misc     1       -       h      "wp_rotrate"      ""                                      "rad s-1"
 state   real     wp_power        ij        misc     1       -       h      "wp_power"        ""                                      "W"   
  
-state   real     x_turbine       {ntrb}    misc     1       -       rh     "x_turbine"       "x coordinate of a turbine"             "m"     
+state   real     x_turbine       {ntrb}    misc     1       -       rh     "x_turbine"       "x coordinate of a turbine"             "m"
 state   real     y_turbine       {ntrb}    misc     1       -       rh     "y_turbine"       "y coordinate of a turbine"             "m" 
+state   real     x_inflow        {ntrb}    misc     1       -       rh     "x_inflow"        "x coordinate of turbine inflow calcs"  "m"
+state   real     y_inflow        {ntrb}    misc     1       -       rh     "y_inflow"        "y coordinate of turbine inflow calcs"  "m"
 state   real     hub_height      {ntrb}    misc     1       -       rh     "hub_height"      "hub height of a turbine"               "m" 
 state   real     rotor_diameter  {ntrb}    misc     1       -       rh     "rotor_diameter"  "rotor diameter of a turbine"           "m" 
 state   real     blade_length    {ntrb}    misc     1       -       rh     "blade_length"    "blade length"                          "m" 

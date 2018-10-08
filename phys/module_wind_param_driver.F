@@ -12,6 +12,8 @@ SUBROUTINE wind_param_driver( grid, config_flags,           &
                               dx, dy, dt,                   & !JDM May 2, 2013
                               x_turbine,                    &
                               y_turbine,                    &
+                              x_inflow,                     & !RSA
+                              y_inflow,                     & !RSA
                               hub_height,                   &
                               rotor_diameter,               &
                               blade_length,                 &
@@ -73,6 +75,8 @@ SUBROUTINE wind_param_driver( grid, config_flags,           &
  REAL, DIMENSION( n_turbines ),                 INTENT( INOUT ) &
   :: x_turbine       & !                         (m)
    , y_turbine       & !                         (m)
+   , x_inflow        & !                         (m)
+   , y_inflow        & !                         (m)
    , hub_height      & !                         (m)
    , rotor_diameter  & !                         (m)
    , blade_length    & !                         (m)
@@ -137,6 +141,8 @@ SUBROUTINE wind_param_driver( grid, config_flags,           &
                          n_timeseries,                     &
                          x_turbine,                        &
                          y_turbine,                        &
+                         x_inflow,                         & !RSA
+                         y_inflow,                         & !RSA
                          hub_height,                       &
                          rotor_diameter,                   &
                          blade_length,                     &

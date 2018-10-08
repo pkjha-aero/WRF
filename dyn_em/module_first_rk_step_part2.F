@@ -821,6 +821,8 @@ BENCH_START(wind_param_driver_tim)
                                   grid%dx,  grid%dy,   grid%dt,                &
                                   grid%x_turbine,                              &
                                   grid%y_turbine,                              &
+                                  grid%x_inflow,                               & !RSA
+                                  grid%y_inflow,                               & !RSA
                                   grid%hub_height,                             &
                                   grid%rotor_diameter,                         &
                                   grid%blade_length,                           &

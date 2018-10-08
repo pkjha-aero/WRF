@@ -19,6 +19,8 @@ USE module_llxy !RSA for converting lat/lon to x/y
                             n_timeseries,                 &
                             x_turbine,                    &
                             y_turbine,                    &
+                            x_inflow,                     & !RSA
+                            y_inflow,                     & !RSA
                             hub_height,                   &
                             rotor_diameter,               &
                             blade_length,                 &
@@ -111,6 +113,8 @@ USE module_llxy !RSA for converting lat/lon to x/y
   REAL, DIMENSION( n_turbines ),                 INTENT(INOUT) &  !should be in if reading from aux file
   :: x_turbine      & ! x location of a turbine              (m)
    , y_turbine      & ! y location of a turbine              (m)
+   , x_inflow       & ! x location of turbine inflow calcs   (m)
+   , y_inflow       & ! y location of turbine inflow calcs   (m)
    , hub_height     & ! hub height                           (m)
    , rotor_diameter & ! hub height                           (m)
    , blade_length   & ! blade_length                         (m)
@@ -241,7 +245,9 @@ USE module_llxy !RSA for converting lat/lon to x/y
   REAL                  :: cnst
   REAL                  :: v0inst
   INTEGER               :: nv0t
-  INTEGER               :: turbine_on_patch
+
+  INTEGER, DIMENSION(n_turbines) :: turbine_on_patch
+  INTEGER, DIMENSION(n_turbines) :: inflow_on_patch
 
   REAL                  :: time_fac
   REAL                  :: xtime
@@ -293,7 +299,7 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
 ! RSA for converting lat/lon to x/y
   TYPE(proj_info)      :: proj
-  REAL                 :: lat1,lon1,knowni,knownj,xnew,ynew,truelat1,truelat2,stdlon
+  REAL                 :: lat1,lon1,knowni,knownj,inew,jnew,truelat1,truelat2,stdlon
 
 ! test
   REAL :: zd, zetazd
@@ -431,11 +437,11 @@ USE module_llxy !RSA for converting lat/lon to x/y
         !   blade_length(sgn)   = 49.0  
         !   theta_turbine(sgn)  = (360.0/100.0)*(sgn-1)
         !   sgn = sgn + 1
-        ! END DO
-        ! END DO
+        ! ENDDO
+        ! ENDDO
         ! DO i = 1,100
         !   print*,'i angle ',i,theta_turbine(i)
-        ! END DO
+        ! ENDDO
      ENDIF !RSA end read file or not
 
      !RSA convert x_turbine and y_turbine from lat/lon to x/y if need be
@@ -449,9 +455,9 @@ USE module_llxy !RSA for converting lat/lon to x/y
            lon1 = xlong_u(its,jts)
         ENDIF
 
-        CALL MPI_BARRIER(MPI_COMM_WORLD,ierr) !RSA not sure if this is needed, or if it should be before or after BCAST
         CALL MPI_BCAST(lat1,1,MPI_REAL,master,MPI_COMM_WORLD,ierr)
         CALL MPI_BCAST(lon1,1,MPI_REAL,master,MPI_COMM_WORLD,ierr)
+        CALL MPI_BARRIER(MPI_COMM_WORLD,ierr) !RSA not sure if this is needed, or if it should be before or after BCAST
 #endif
 
         !RSA parameters for map_set. This function defines the structure 'proj'
@@ -505,37 +511,33 @@ USE module_llxy !RSA for converting lat/lon to x/y
   DO j = j_start, j_end
   DO k = 1, 20
     wp_ts(i,k,j) = 0.0
-  END DO
-  END DO
-  END DO
+  ENDDO
+  ENDDO
+  ENDDO
 
   DO i = i_start, i_end+1
     u_x(i) = (i-1)*dx
     v_x(i) = dxo2 + u_x(i)
     w_x(i) = v_x(i)
-  END DO
+  ENDDO
 
   DO j = j_start, j_end+1
     v_y(j) = (j-1)*dy
     u_y(j) = dyo2 + v_y(j)
     w_y(j) = u_y(j)
-  END DO
+  ENDDO
 
-!____________________________________________________________________________________________________________________________
-!
-! 2. If some part of the turbine is on this patch, compute the height dependent gridpoint position variables
-!____________________________________________________________________________________________________________________________
-
-  turbine_on_patch = 0
+  !RSA determine if turbine(n) is on patch
+  xmin_tile=u_x(i_start)
+  xmax_tile=u_x(i_end+1)
+  ymin_tile=v_y(j_start)
+  ymax_tile=v_y(j_end+1)
 
   DO n = 1, n_turbines
 
-    !Define if turbine falls within tile neighborhood
-    xmin_tile=u_x(i_start)
-    xmax_tile=u_x(i_end+1)
-    ymin_tile=v_y(j_start)
-    ymax_tile=v_y(j_end+1)
+    turbine_on_patch(n) = 0
 
+    !Define if turbine falls within tile neighborhood
     xmin_turb = x_turbine(n) - rotor_diameter(n)
     xmax_turb = x_turbine(n) + rotor_diameter(n)
     ymin_turb = y_turbine(n) - rotor_diameter(n)
@@ -546,21 +548,51 @@ USE module_llxy !RSA for converting lat/lon to x/y
     IF ( .NOT. ( (xmax_tile .LT. xmin_turb) .OR.              &  
                  (xmin_tile .GE. xmax_turb) .OR.              &   !changed from GT
                  (ymax_tile .LT. ymin_turb) .OR.              &  
-                 (ymin_tile .GE. ymax_turb) )         ) THEN      !changed from GT
+                 (ymin_tile .GE. ymax_turb) )  ) THEN             !changed from GT
 
-      turbine_on_patch = 1
+      turbine_on_patch(n) = 1
+    ENDIF
+  ENDDO
+  
+  !RSA calculate x_inflow and y_inflow positions
+  DO n = 1, n_turbines
+
+    !Draw ray upstream from turbine from hub to rotor_diameter using turbine yaw
+    x_inflow(n) = -rotor_diameter(n)*cos(theta_turbine(n)*pi/180.0) + x_turbine(n)
+    y_inflow(n) =  rotor_diameter(n)*sin(theta_turbine(n)*pi/180.0) + y_turbine(n)
+
+    !See if inflow location is on patch
+    inflow_on_patch(n) = 0
+
+    IF ( .NOT. ( (xmax_tile .LT. x_inflow(n)) .OR.              &  
+                 (xmin_tile .GE. x_inflow(n)) .OR.              &   !changed from GT
+                 (ymax_tile .LT. y_inflow(n)) .OR.              &  
+                 (ymin_tile .GE. y_inflow(n)) )  ) THEN             !changed from GT
+
+      inflow_on_patch(n) = 1
+    ENDIF
+  ENDDO
+
+!____________________________________________________________________________________________________________________________
+!
+! 2. If some part of the turbine is on this patch, compute the height dependent gridpoint position variables
+!____________________________________________________________________________________________________________________________
+
+  DO n = 1, n_turbines
+
+    IF (turbine_on_patch(n) .EQ. 1) THEN
 
       DO j = j_start-1, j_end+1   
         DO i = i_start-1, i_end+1
            w_z(i,kts,j)=0.0
-        END DO
-      END DO
+        ENDDO
+      ENDDO
   
       zmax_turb = hub_height(n) + rotor_diameter(n)*0.5                                      
 
       DO k = kts+1,kte             ! compute 1D column of z-values to determine k_end for the tile
         w_z(i_start,k,j_start) = w_z(i_start,k-1,j_start) + 1.0/rdzw(i_start,k-1,j_start)
-      END DO
+      ENDDO
         
       DO k=kts+1,kte-1             ! k_end = 1 index greater to allow for nonuniform heights within the tile
         IF ( (w_z(i_start,k-1,j_start) .LT. zmax_turb) .AND.    &
@@ -573,23 +605,23 @@ USE module_llxy !RSA for converting lat/lon to x/y
         DO k = kts+1, k_end+1
           DO i = i_start, i_end
             w_z(i,k,j) = w_z(i,k-1,j) + 1.0/rdzw(i,k-1,j)
-          END DO
-        END DO
-      END DO
+          ENDDO
+        ENDDO
+      ENDDO
 
       DO j = j_start, j_end         ! compute the i_start and i_end ghost nodes
         DO k = kts+1, k_end+1
           w_z(i_start-1,k,j)=w_z(i_start,k,j)
           w_z(i_end+1,k,j)=w_z(i_end,k,j)
-        END DO
-      END DO
+        ENDDO
+      ENDDO
 
       DO k = kts+1, k_end+1           ! compute the j_start and j_end ghost nodes
         DO i = i_start, i_end  
           w_z(i,k,j_start-1) = w_z(i,k,j_start)
           w_z(i,k,j_end+1) = w_z(i,k,j_end)
-        END DO
-      END DO
+        ENDDO
+      ENDDO
 
       DO k = kts+1, k_end+1           ! compute get the corner ghost nodes
         w_z(i_start-1,k,j_start-1)=0.5*(w_z(i_start-1,k,j_start) + &
@@ -600,7 +632,7 @@ USE module_llxy !RSA for converting lat/lon to x/y
                                       w_z(i_end,k,j_start-1) ) 
         w_z(i_end+1,k,j_end+1)=0.5*(w_z(i_end+1,k,j_end) +     &
                                     w_z(i_end,k,j_end+1) ) 
-      END DO
+      ENDDO
 
       DO j = j_start, j_end           ! compute u_z and v_z up to k_end
         DO k = kts, k_end
@@ -608,9 +640,9 @@ USE module_llxy !RSA for converting lat/lon to x/y
             ! 0.5 for averaging in horizontal, 0.5 for averaging in vertical
             u_z(i,k,j) = 0.5*(   0.5*( w_z(i-1,k+1,j) + w_z(i,k+1,j) )   &
                                + 0.5*( w_z(i-1,k,j)   + w_z(i,k,j)   ) )
-          END DO
-        END DO
-      END DO
+          ENDDO
+        ENDDO
+      ENDDO
 
       DO j = j_start, j_end+1           ! compute u_z and v_z up to k_end
         DO k = kts, k_end
@@ -618,12 +650,12 @@ USE module_llxy !RSA for converting lat/lon to x/y
             ! 0.5 for averaging in horizontal, 0.5 for averaging in vertical
             v_z(i,k,j) = 0.5*(   0.5*( w_z(i,k+1,j-1) + w_z(i,k+1,j) )   &
                                + 0.5*( w_z(i,k,j-1)   + w_z(i,k,j)   ) )
-          END DO
-        END DO
-      END DO
+          ENDDO
+        ENDDO
+      ENDDO
 
-    END IF ! turbine neighborhood is on patch
-  END DO ! n_turbines
+    ENDIF ! turbine neighborhood is on patch
+  ENDDO ! n_turbines
 
 !____________________________________________________________________________________________________________________________
 !
@@ -656,7 +688,7 @@ USE module_llxy !RSA for converting lat/lon to x/y
   ENDIF
 
   DO n = 1, n_turbines
-    IF (turbine_on_patch .EQ. 1 ) THEN ! 
+    IF (turbine_on_patch(n) .EQ. 1 ) THEN ! 
       xmin_tile = u_x(i_start)
       xmax_tile = u_x(i_end+1)
       ymin_tile = v_y(j_start)
@@ -680,7 +712,7 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
         DO k = kts+1, k_end
           turb_z(k) = u_z(imin,k,jmin) - hub_height(n)
-        END DO
+        ENDDO
 
         kmin=minloc(abs(turb_z(kts+1:k_end)),1)+kts
         v0inst = u(imin,kmin,jmin)*cos(theta)*cos(tilt)+v(imin,kmin,jmin)*sin(theta)*cos(tilt) !Instantaneous velocity component normal to the rotor.
@@ -710,7 +742,7 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
       ENDIF ! hub is on the tile
     ENDIF ! Part of turbine is on this patch,
-  END DO ! n_turbines
+  ENDDO ! n_turbines
 
 #ifdef DM_PARALLEL
   IF ( mytask .eq. master ) THEN
@@ -743,9 +775,9 @@ USE module_llxy !RSA for converting lat/lon to x/y
 ! 4. Add current v0 to timeseries in v0t, compute current average, and calculate pitch and rpm
 !____________________________________________________________________________________________________________________________
 
-  IF (turbine_on_patch .EQ. 1 ) THEN !only do this if part of the turbine is on the patch
+  DO n = 1, n_turbines
 
-    DO n = 1, n_turbines
+    IF (turbine_on_patch(n) .EQ. 1 ) THEN !only do this if part of the turbine is on the patch
 
       dum = 0.0                         ! Looking for problems...
       DO k = 1,n_timeseries
@@ -876,9 +908,9 @@ USE module_llxy !RSA for converting lat/lon to x/y
             dzu(i,k,j) = u_z(i,k,j) - hub_height(n)
             dzv(i,k,j) = v_z(i,k,j) - hub_height(n)
             dzw(i,k,j) = w_z(i,k,j) - hub_height(n)
-          END DO
-        END DO
-      END DO
+          ENDDO
+        ENDDO
+      ENDDO
 
       DO j = j_start, j_end
         DO k = kts, k_end
@@ -889,9 +921,9 @@ USE module_llxy !RSA for converting lat/lon to x/y
             wp_acc_u(i,k,j) = 0.0
             wp_acc_v(i,k,j) = 0.0
             wp_acc_w(i,k,j) = 0.0
-          END DO
-        END DO
-      END DO
+          ENDDO
+        ENDDO
+      ENDDO
 
       rotor_radius = 0.5*rotor_diameter(n)
 
@@ -933,8 +965,8 @@ USE module_llxy !RSA for converting lat/lon to x/y
                       acc_u = (1.0/adenom)*exp(-(dru(i,j)**2)/bdenom) !NM 1-D !Gaussian
                       fx = fn*cos(theta) !NM to x direction
                       ru_tendf(i,k,j) = ru_tendf(i,k,j) - muu(i,j)*acc_u*cnst*fx !NM
-                   END IF
-                END IF
+                   ENDIF
+                ENDIF
 
                 IF (dzv(i,k,j) .le. -(radmin)) then !NM tower below hub
                    Rtwr = abs(dzv(i,k,j))*(Rtwrb-Rtwrt)/hub_height(n)+Rtwrt !NM linear	 
@@ -945,8 +977,8 @@ USE module_llxy !RSA for converting lat/lon to x/y
                       acc_v = (1.0/adenom)*exp(-(drv(i,j)**2)/bdenom) !NM 1-D !Gaussian
                       fy = fn*sin(theta) !NM to x direction
                       rv_tendf(i,k,j) = rv_tendf(i,k,j) - muv(i,j)*acc_v*cnst*fy !NM
-                  END IF
-                END IF
+                  ENDIF
+                ENDIF
              ENDIF !cdt > 0
 
 !------ X ---- 
@@ -1156,13 +1188,12 @@ USE module_llxy !RSA for converting lat/lon to x/y
 !!            ENDIF
 !!
 
-          END DO         ! j loop
-        END DO         ! k loop
-      END DO       ! i loop
+          ENDDO         ! j loop
+        ENDDO         ! k loop
+      ENDDO       ! i loop
 
-    END DO  ! n loop over all turbines
-
-  ENDIF !turbine_on_patch = 1
+    ENDIF !turbine_on_patch = 1
+  ENDDO  ! n loop over all turbines
 
 201 format (a18,3I6,2F12.6)
 
@@ -1313,8 +1344,8 @@ SUBROUTINE calc_distance( x_turb, y_turb, theta_turb,     &
          drv(i,j)=calc_yprime(ar,br,cr,x0v,y0v)
          drw(i,j)=calc_yprime(ar,br,cr,x0w,y0w)
 
-       END DO
-    END DO
+       ENDDO
+    ENDDO
 
 END SUBROUTINE calc_distance
 
@@ -1391,7 +1422,7 @@ FUNCTION calc_rpm_psu15( x ) result( rpm )
         GOTO 1
      ENDIF
 
-  END DO
+  ENDDO
   
   IF ( x .LT. ws(0) ) rpm = rp(0)
   IF ( x .EQ. ws(nws-1) ) rpm = rp(nws-1)
