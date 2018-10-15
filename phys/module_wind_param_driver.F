@@ -132,11 +132,13 @@ SUBROUTINE wind_param_driver( grid, config_flags,           &
 
   IF ( config_flags%wp_opt .GE. 2 ) then
 
-
      CALL gen_act_disk ( ru_tendf, rv_tendf, rw_tendf,     & 
                          config_flags%wp_opt,              & 
                          config_flags%windturb_spec,       & !RSA
                          config_flags%turb_loc_in_latlon,  & !RSA
+                         config_flags%truelat1,            & !RSA
+                         config_flags%truelat2,            & !RSA
+                         config_flags%stand_lon,           & !RSA
                          n_turbines,                       &
                          n_timeseries,                     &
                          x_turbine,                        &
@@ -157,8 +159,6 @@ SUBROUTINE wind_param_driver( grid, config_flags,           &
                          muu, muv, mut,                    & 
                          rdzw, dx, dy, dt,                 & !JDM May 2, 2013
                          v0t, d0t, itimestep,              & !JDM May 2, 2013
-                         ! grid%truelat1, grid%truelat2,     & !RSA
-                         ! grid%stand_lon,                   & !RSA
                          grid%xlat_v, grid%xlong_u,        & !RSA
                          ids, ide, jds, jde, kds, kde,     &
                          ims, ime, jms, jme, kms, kme,     &

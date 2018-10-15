@@ -15,6 +15,8 @@ USE module_llxy !RSA for converting lat/lon to x/y
                             wp_opt,                       & 
                             windturb_spec,                & !RSA
                             turb_loc_in_latlon,           & !RSA
+                            truelat1, truelat2,           & !RSA
+                            stand_lon,                    & !RSA
                             n_turbines,                   &
                             n_timeseries,                 &
                             x_turbine,                    &
@@ -35,8 +37,6 @@ USE module_llxy !RSA for converting lat/lon to x/y
                             muu, muv, mut,                &
                             rdzw,  dx, dy, dt,            &
                             v0t, d0t, itimestep,          &
-                            ! truelat1, truelat2,           & !RSA
-                            ! stdlon,                       & !RSA
                             xlat_v, xlong_u,              & !RSA
                             ids, ide, jds, jde, kds, kde, &
                             ims, ime, jms, jme, kms, kme, &
@@ -104,8 +104,8 @@ USE module_llxy !RSA for converting lat/lon to x/y
   LOGICAL,                                       INTENT( IN  ) &
   :: turb_loc_in_latlon !RSA flag for turbine location in lat/lon, else in meters
 
-  ! REAL,                                          INTENT( IN  ) &
-  ! :: truelat1, truelat2, stdlon !RSA for converting lat/lon to x/y
+  REAL,                                          INTENT( IN  ) &
+  :: truelat1, truelat2, stand_lon !RSA for converting lat/lon to x/y
 
   REAL, DIMENSION( ims:ime, jms:jme ),           INTENT( IN  ) &
   :: xlat_v, xlong_u !RSA for converting lat/lon to x/y
@@ -235,7 +235,8 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
   REAL, DIMENSION(2)    :: fnft
   REAL                  :: fn, ft
-  REAL                  :: V0
+  REAL                  :: v0, d0 !RSA
+  REAL                  :: u_c, v_c !RSA
   REAL                  :: rho
   REAL                  :: rpm, blades, pitchdeg
   REAL                  :: rotor_radius
@@ -299,7 +300,7 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
 ! RSA for converting lat/lon to x/y
   TYPE(proj_info)      :: proj
-  REAL                 :: lat1,lon1,knowni,knownj,inew,jnew,truelat1,truelat2,stdlon
+  REAL                 :: lat1,lon1,knowni,knownj,inew,jnew!,truelat1,truelat2,stand_lon
 
 ! test
   REAL :: zd, zetazd
@@ -332,7 +333,8 @@ USE module_llxy !RSA for converting lat/lon to x/y
   blades  =  3
   rho     =  1.225
   start_fac = 1.0
-  yaw_thresh = 10000.0 !10.0*60.0*10.0**2
+  ! yaw_thresh = 10000.0 !10.0*60.0*10.0**2
+  yaw_thresh = 100.0 !10.0*60.0*10.0**2 !RSAtest
   yaw_new = 0.0
   tilt_deg = 4.0 ! in degrees
   tilt = tilt_deg*pi/180.0
@@ -351,8 +353,8 @@ USE module_llxy !RSA for converting lat/lon to x/y
   ENDDO
   ! print*,'dum',dum
   
-  ! IF ( dum .EQ. 0.0 ) THEN
-  IF ( itimestep .LE. 1 ) THEN
+  IF ( dum .EQ. 0.0 ) THEN
+  ! IF ( itimestep .LE. 1 ) THEN
      !RSA for turbine info read from file (adapted from NM code)
      IF (TRIM(windturb_spec) .NE. 'none') THEN
         OPEN(file=TRIM(windturb_spec),unit=19,FORM='FORMATTED',STATUS='OLD',IOSTAT=istat)
@@ -463,13 +465,13 @@ USE module_llxy !RSA for converting lat/lon to x/y
         !RSA parameters for map_set. This function defines the structure 'proj'
         !which is used below in latlon_to_ij. proj_code should be set to match
         !the projection used in namelist.wps (see share/module_llxy.F for more info)
-        truelat1 = 36.585 !RSA from namelist.wps
-        truelat2 = 36.585 !RSA from namelist.wps
-        stdlon = -97.760 !RSA from namelist.wps
+        ! truelat1 = 36.585 !RSA from namelist.wps
+        ! truelat2 = 36.585 !RSA from namelist.wps
+        ! stand_lon = -97.760 !RSA from namelist.wps
         knowni = 0.0 !RSA always 0 (origin)
         knownj = 0.0 !RSA always 0 (origin)
         CALL map_set(proj_code=PROJ_LC,proj=proj,lat1=lat1,lon1=lon1, &
-                     knowni=knowni,knownj=knownj,dx=dx,stdlon=stdlon, &
+                     knowni=knowni,knownj=knownj,dx=dx,stdlon=stand_lon, &
                      truelat1=truelat1,truelat2=truelat2)
 
         DO n = 1, n_turbines
@@ -487,7 +489,7 @@ USE module_llxy !RSA for converting lat/lon to x/y
         print*,'lat1=',lat1
         print*,'lon1=',lon1
         print*,'dx=',dx
-        print*,'stdlon=',stdlon
+        print*,'stand_lon=',stand_lon
         print*,'truelat1=',truelat1
         print*,'truelat2=',truelat2
 
@@ -535,9 +537,9 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
   DO n = 1, n_turbines
 
+    !Define if turbine falls within tile neighborhood
     turbine_on_patch(n) = 0
 
-    !Define if turbine falls within tile neighborhood
     xmin_turb = x_turbine(n) - rotor_diameter(n)
     xmax_turb = x_turbine(n) + rotor_diameter(n)
     ymin_turb = y_turbine(n) - rotor_diameter(n)
@@ -560,6 +562,7 @@ USE module_llxy !RSA for converting lat/lon to x/y
     !Draw ray upstream from turbine from hub to rotor_diameter using turbine yaw
     x_inflow(n) = -rotor_diameter(n)*cos(theta_turbine(n)*pi/180.0) + x_turbine(n)
     y_inflow(n) =  rotor_diameter(n)*sin(theta_turbine(n)*pi/180.0) + y_turbine(n)
+    ! write(*,*) "n=",n,"cos=",cos(theta_turbine(n)*pi/180.0),"sin=",sin(theta_turbine(n)*pi/180.0),"xin=",x_inflow(n),"yin=",y_inflow(n) !RSAtest
 
     !See if inflow location is on patch
     inflow_on_patch(n) = 0
@@ -667,11 +670,12 @@ USE module_llxy !RSA for converting lat/lon to x/y
 ! shift wind speed for each turbine (column of v0t) back by one unit to make room
 ! for the current v0 value 
 
-  IF ( itimestep .le. 1) THEN
-    v0t = 0.0
-    d0t = 0.0
-    acc_yaw_err = 0.0
-  ENDIF
+  !RSA commenting out
+  ! IF ( itimestep .le. 1) THEN
+  !   v0t = 0.0
+  !   d0t = 0.0
+  !   acc_yaw_err = 0.0
+  ! ENDIF
 
   DO n = 1, n_turbines
     DO k = n_timeseries-1,1,-1
@@ -688,22 +692,25 @@ USE module_llxy !RSA for converting lat/lon to x/y
   ENDIF
 
   DO n = 1, n_turbines
-    IF (turbine_on_patch(n) .EQ. 1 ) THEN ! 
-      xmin_tile = u_x(i_start)
-      xmax_tile = u_x(i_end+1)
-      ymin_tile = v_y(j_start)
-      ymax_tile = v_y(j_end+1)
+    ! IF (turbine_on_patch(n) .EQ. 1 ) THEN ! 
+    IF (inflow_on_patch(n) .EQ. 1 ) THEN
+      ! xmin_tile = u_x(i_start)
+      ! xmax_tile = u_x(i_end+1)
+      ! ymin_tile = v_y(j_start)
+      ! ymax_tile = v_y(j_end+1)
       theta =  theta_turbine(n)*pi/180.0
 
       !If turbine hub is within the tile do the following
-      IF ( (x_turbine(n) .GE. xmin_tile) .AND. (x_turbine(n) .LT. xmax_tile) .AND. &
-           (y_turbine(n) .GE. ymin_tile) .AND. (y_turbine(n) .LT. ymax_tile) ) THEN
-  
-        imin = minloc(abs(u_x(i_start:i_end)-x_turbine(n)),1)+i_start-1 !Using u-locations for no reason other than convenience
-        jmin = minloc(abs(u_y(j_start:j_end)-y_turbine(n)),1)+j_start-1
+      ! IF ( (x_turbine(n) .GE. xmin_tile) .AND. (x_turbine(n) .LT. xmax_tile) .AND. &
+      !      (y_turbine(n) .GE. ymin_tile) .AND. (y_turbine(n) .LT. ymax_tile) ) THEN
+
+        !using w locations, will calculate cell-centered values below
+        imin = minloc(abs(w_x(i_start:i_end)-x_inflow(n)),1)+i_start-1
+        jmin = minloc(abs(w_y(j_start:j_end)-y_inflow(n)),1)+j_start-1
+        ! write(*,*) "xturb=",x_turbine(n),"yturb=",y_turbine(n),"imin=",imin,"jmin=",jmin !RSAtest
      
         ! imin = imin-6 ! 1D Upstream
-        imin = imin + 2 !RSAtest
+        ! imin = imin + 2 !RSAtest
 
         IF (imin .LT. its ) THEN
           print*,'imin < its in phys/module_gen_act_disk.F, stopping'
@@ -715,15 +722,25 @@ USE module_llxy !RSA for converting lat/lon to x/y
         ENDDO
 
         kmin=minloc(abs(turb_z(kts+1:k_end)),1)+kts
-        v0inst = u(imin,kmin,jmin)*cos(theta)*cos(tilt)+v(imin,kmin,jmin)*sin(theta)*cos(tilt) !Instantaneous velocity component normal to the rotor.
+        u_c = 0.5 * ( u(imin,kmin,jmin) + u(imin+1,kmin,jmin) )
+        v_c = 0.5 * ( v(imin,kmin,jmin) + v(imin,kmin,jmin+1) )
+        v0inst = u_c*cos(theta)*cos(tilt)+v_c*sin(theta)*cos(tilt) !Instantaneous velocity component normal to the rotor.
+        ! v0inst = u(imin,kmin,jmin)*cos(theta)*cos(tilt)+v(imin,kmin,jmin)*sin(theta)*cos(tilt) !Instantaneous velocity component normal to the rotor.
 
         IF (wp_opt .EQ. 3 ) THEN
-          IF ( ( u(imin,kmin,jmin) .GE. 0.0 ) .AND. ( v(imin,kmin,jmin) .LT. 0.0 ) ) THEN    !Wind direction, independent of the
-             d0inst = 360.0 - (atan2(u(imin,kmin,jmin),v(imin,kmin,jmin) )*180.0/pi - 90.0)  !rotor angle. 0 and 360 are Westerly. 
-          ELSE                                                                               !Positive values are counterclockwise
-             d0inst = 90.0 - atan2(u(imin,kmin,jmin),v(imin,kmin,jmin) )*180.0/pi            !up to 360. No negative values.
+          IF ( ( u_c .GE. 0.0 ) .AND. ( v_c .LT. 0.0 ) ) THEN   !Wind direction, independent of the
+             d0inst = 360.0 - (atan2(u_c,v_c)*180.0/pi - 90.0)  !rotor angle. 0 and 360 are Westerly. 
+          ELSE                                                  !Positive values are counterclockwise
+             d0inst = 90.0 - atan2(u_c,v_c)*180.0/pi            !up to 360. No negative values.
           ENDIF
-        ENDIF    
+        ENDIF
+        ! IF (wp_opt .EQ. 3 ) THEN
+        !   IF ( ( u(imin,kmin,jmin) .GE. 0.0 ) .AND. ( v(imin,kmin,jmin) .LT. 0.0 ) ) THEN    !Wind direction, independent of the
+        !      d0inst = 360.0 - (atan2(u(imin,kmin,jmin),v(imin,kmin,jmin) )*180.0/pi - 90.0)  !rotor angle. 0 and 360 are Westerly. 
+        !   ELSE                                                                               !Positive values are counterclockwise
+        !      d0inst = 90.0 - atan2(u(imin,kmin,jmin),v(imin,kmin,jmin) )*180.0/pi            !up to 360. No negative values.
+        !   ENDIF
+        ! ENDIF    
 
 #ifdef DM_PARALLEL
         tag=n
@@ -740,8 +757,8 @@ USE module_llxy !RSA for converting lat/lon to x/y
         ENDIF
 #endif
 
-      ENDIF ! hub is on the tile
-    ENDIF ! Part of turbine is on this patch,
+      ! ENDIF ! hub is on the tile
+    ENDIF ! inflow location on patch
   ENDDO ! n_turbines
 
 #ifdef DM_PARALLEL
@@ -777,7 +794,8 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
   DO n = 1, n_turbines
 
-    IF (turbine_on_patch(n) .EQ. 1 ) THEN !only do this if part of the turbine is on the patch
+    !RSA moving down to make sure that all procs have the same v0t, d0t, and acc_yaw_err
+    ! IF (turbine_on_patch(n) .EQ. 1 ) THEN !only do this if part of the turbine is on the patch
 
       dum = 0.0                         ! Looking for problems...
       DO k = 1,n_timeseries
@@ -794,12 +812,20 @@ USE module_llxy !RSA for converting lat/lon to x/y
       ENDIF 
 
       v0t(1,n)=v0n(n)                  ! Assign the first element the current v0 
+      d0t(1,n)=d0n(n)
 
       dum = 0.0                        ! Looking for problems...
       DO k = 1,n_timeseries
          dum = dum + v0t(k,n)
       ENDDO
-      v0 = dum/real(n_timeseries)
+      v0 = dum/real(n_timeseries) !Running time-average
+
+      dum = 0.0                        ! Looking for problems...
+      DO k = 1,n_timeseries
+         dum = dum + d0t(k,n)
+      ENDDO
+      d0 = dum/real(n_timeseries) !Running time-average
+
 
       IF (wp_opt .EQ. 3) THEN
 
@@ -817,12 +843,18 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
         IF (yawing(n) .EQ. 0 ) THEN
 
-          d0t(1,n)=d0n(n)
-          delta = theta_turbine(n) - d0t(1,n)
+          ! d0t(1,n)=d0n(n) !RSA moving up
+          ! delta = theta_turbine(n) - d0t(1,n)
+          ! IF ( delta .LT. -180.0 ) THEN 
+          !   delta = theta_turbine(n) + ( 360.0 - d0t(1,n) )
+          ! ELSE IF (delta .GE. 180.0 ) THEN 
+          !   delta = theta_turbine(n) - ( 360.0 + d0t(1,n) )
+          ! ENDIF
+          delta = theta_turbine(n) - d0
           IF ( delta .LT. -180.0 ) THEN 
-            delta = theta_turbine(n) + ( 360.0 - d0t(1,n) )
+            delta = theta_turbine(n) + ( 360.0 - d0 )
           ELSE IF (delta .GE. 180.0 ) THEN 
-            delta = theta_turbine(n) - ( 360.0 + d0t(1,n) )
+            delta = theta_turbine(n) - ( 360.0 + d0 )
           ENDIF
 
           sgn = 1.0
@@ -832,18 +864,25 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
         ELSE ! turbine is yawing or ready to start
 
-         dum = 0.0
-         DO k = 1,n_timeseries
-           dum = dum + d0t(k,n)
-         ENDDO
+         ! dum = 0.0
+         ! DO k = 1,n_timeseries
+         !   dum = dum + d0t(k,n)
+         ! ENDDO
 
-         yaw_new = dum/real(n_timeseries)
+         ! yaw_new = dum/real(n_timeseries)
+         yaw_new = d0 !d0 calculated above
          yaw_inc = yaw_rate*dt
+         ! delta = theta_turbine(n) - yaw_new  
+         ! IF ( delta .LT. -180.0 ) THEN 
+         !   delta = theta_turbine(n) + ( 360.0 - d0t(1,n) )
+         ! ELSE IF (delta .GE. 180.0 ) THEN 
+         !   delta = theta_turbine(n) - ( 360.0 + d0t(1,n) )
+         ! ENDIF
          delta = theta_turbine(n) - yaw_new  
          IF ( delta .LT. -180.0 ) THEN 
-           delta = theta_turbine(n) + ( 360.0 - d0t(1,n) )
+           delta = theta_turbine(n) + ( 360.0 - d0 )
          ELSE IF (delta .GE. 180.0 ) THEN 
-           delta = theta_turbine(n) - ( 360.0 + d0t(1,n) )
+           delta = theta_turbine(n) - ( 360.0 + d0 )
          ENDIF
 
          sgn = 1.0
@@ -864,6 +903,8 @@ USE module_llxy !RSA for converting lat/lon to x/y
         IF ( theta_turbine(n) .LT. 0.0 ) theta_turbine(n) = 360.0 + theta_turbine(n)
 
       ENDIF !wp_opt .EQ. 3
+
+    IF (turbine_on_patch(n) .EQ. 1 ) THEN !only do this if part of the turbine is on the patch
 
       theta =  theta_turbine(n)*pi/180.0
 
@@ -960,7 +1001,7 @@ USE module_llxy !RSA for converting lat/lon to x/y
                    Rtwr = abs(dzu(i,k,j))*(Rtwrb-Rtwrt)/hub_height(n)+Rtwrt !NM linear	 
                    IF ( abs( dau(i,j) ) .le. Rtwr) then !NM tower below hub; dau needs to be less than tower radius
                    !JDM-04-201 Note to self. This should be fixed so that the tower is not grid location dependent. Same goes for the hub!
-                      fn = 0.5*rho*v0*v0*Cdt !NM force per unit area for tower
+                      fn = 0.5*rho*v0*v0*cdt !NM force per unit area for tower
                       ft = 0.0 !NM no tangential force
                       acc_u = (1.0/adenom)*exp(-(dru(i,j)**2)/bdenom) !NM 1-D !Gaussian
                       fx = fn*cos(theta) !NM to x direction
@@ -972,7 +1013,7 @@ USE module_llxy !RSA for converting lat/lon to x/y
                    Rtwr = abs(dzv(i,k,j))*(Rtwrb-Rtwrt)/hub_height(n)+Rtwrt !NM linear	 
                    IF ( abs( dav(i,j) ) .le. Rtwr) then !NM tower below hub; dau needs to be less than tower radius
                    !JDM-04-201 Note to self. This should be fixed so that the tower is not grid location dependent. Same goes for the hub!
-                      fn = 0.5*rho*v0*v0*Cdt !NM force per unit area for tower
+                      fn = 0.5*rho*v0*v0*cdt !NM force per unit area for tower
                       ft = 0.0 !NM no tangential force
                       acc_v = (1.0/adenom)*exp(-(drv(i,j)**2)/bdenom) !NM 1-D !Gaussian
                       fy = fn*sin(theta) !NM to x direction
@@ -985,7 +1026,7 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
 	     IF ( (ru(i,k,j) .le. radmin) .and. (ru(i,k,j) .gt. -0.001) ) then !HUB-----------------------------------	
           
-	        fn = 0.5*rho*v0*v0*Cdh  !NM only need force per unit area
+	        fn = 0.5*rho*v0*v0*cdh  !NM only need force per unit area
 
 	        ft = 0.0 !NM no tangential force
 
@@ -1066,7 +1107,7 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
 	      IF ( (rv(i,k,j) .le. radmin) .and. (rv(i,k,j) .gt. -0.001) ) then !HUB------------------------------------	
 
-		  fn = 0.5*rho*v0*v0*Cdh 
+		  fn = 0.5*rho*v0*v0*cdh 
 
 		  ft = 0.0
 
@@ -1191,6 +1232,21 @@ USE module_llxy !RSA for converting lat/lon to x/y
           ENDDO         ! j loop
         ENDDO         ! k loop
       ENDDO       ! i loop
+
+    ! ELSE !if turbine not on patch
+
+    !   dum = 0.0
+    !   DO k = 1,n_timeseries
+    !     dum = dum + v0t(k,n)
+    !   ENDDO
+
+    !   !If this is the first time through the GAD routine,
+    !   !RSA Assign last  element of v0t to 1.0 so that the input file will not be
+    !   !read again. These values should never be used because there is no turbine
+    !   !on this patch.
+    !   IF ( dum .eq. 0. ) THEN  
+    !      v0t(n_timeseries,n) = 1.0 
+    !   ENDIF
 
     ENDIF !turbine_on_patch = 1
   ENDDO  ! n loop over all turbines
