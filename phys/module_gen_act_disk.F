@@ -7,8 +7,6 @@ USE module_llxy !RSA for converting lat/lon to x/y
   USE MODULE_DM
 #endif
   
-! real, parameter :: pi=3.14159265359 !RSA dont need this with module_llxy
-  
   CONTAINS
     
   SUBROUTINE gen_act_disk ( ru_tendf, rv_tendf, rw_tendf, &
@@ -48,26 +46,20 @@ USE module_llxy !RSA for converting lat/lon to x/y
 !
 ! Purpose: To calculate forces using the generalized actuator disk model. 
 !
-! Version using MPI for turbine v0 and yaw, with validated yaw orientation
-! using calc_yprime. 
+! See Mirocha et al. (2014), J. Renew. Sust. Energy:
+! "Implementation of a generalized actuator disk wind turbine model into the
+! weather research and forecasting model for large-eddy simulation applications"
 !
 ! Lookup tables use generic Penn State 1.5 MW GE SLE turbine (approximate).
 !
-!  1. Here, unlike the siemens code which uses xi = twist - pitch , we use
-!     xi = twist + pitch; Except near the blade root, the angles of attack
-!     stay within the lookup tables (they did not for xi = twist - pitch). 
-!
-!  2. Rather than polynomial curve fits we now use linear interpolation
-!     for Cd and Cl.
-!
-!  3. Corrected equations for tilt term, 12 01 2014
-!
-!     Last modified Dec 01, 2014. Cleaned up on April 09, 2015
-!
-!  If the code dies, check to see if the flow is coming from behind the turbine.
-!  (e.g. rotate the yaw). Also see if imin is beyond the patch. Check with
-!  grep -i 'imin' rsl.out.* If so, decrease the offset. This needs to be fixed 
-!  and will be someday...
+! Last modified 10/2018 by RSA and JDM. 
+! - Code will not compute GAD forces if flow is from behind the turbine; turbine
+! must first yaw into mean flow direction (when yaw error exceeds threshold) 
+! before forces will be calculated.
+! - Added ability specify upwind distance for turbine inflow calculation relative 
+! to turbine hub.
+! - Added ability to read in turbine info from a file specifying turbine
+! parameters, including position in either x,y or lat,lon.
 !
 !=============================================================================
 
@@ -239,7 +231,7 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
   REAL, DIMENSION(2)    :: fnft
   REAL                  :: fn, ft
-  REAL                  :: v0, d0 !RSA
+  REAL                  :: v0, d0, v0t_avg, d0t_avg !RSA
   REAL                  :: u_c, v_c !RSA
   REAL                  :: rho
   REAL                  :: rpm, blades, pitchdeg
@@ -337,8 +329,8 @@ USE module_llxy !RSA for converting lat/lon to x/y
   blades  =  3
   rho     =  1.225
   start_fac = 1.0
-  ! yaw_thresh = 10000.0 !10.0*60.0*10.0**2
-  yaw_thresh = 100.0 !10.0*60.0*10.0**2 !RSAtest
+  yaw_thresh = 10000.0 !10.0*60.0*10.0**2
+  ! yaw_thresh = 100.0 !10.0*60.0*10.0**2 !RSAtest
   yaw_new = 0.0
   tilt_deg = 4.0 ! in degrees
   tilt = tilt_deg*pi/180.0
@@ -348,17 +340,14 @@ USE module_llxy !RSA for converting lat/lon to x/y
   Rtwrt = 1.5 !NM radius is say 1.5 meters
   Rtwrb = 2.0 !NM radius of tower at base
 
-  !RSA if this is the first timestep, then read in turbine info 
+  !RSA if this is the first time the GAD is turned on, then read in turbine info 
   !from file or hard coded values
   dum = 0.0
   DO k = 1,n_timeseries
       dum = dum + v0t(k,1)
-      ! print*,'k=',k,'v0t(k)=',v0t(k,1)
   ENDDO
-  ! print*,'dum',dum
   
   IF ( dum .EQ. 0.0 ) THEN
-  ! IF ( itimestep .LE. 1 ) THEN
      !RSA for turbine info read from file (adapted from NM code)
      IF (TRIM(windturb_spec) .NE. 'none') THEN
         OPEN(file=TRIM(windturb_spec),unit=19,FORM='FORMATTED',STATUS='OLD',IOSTAT=istat)
@@ -421,33 +410,6 @@ USE module_llxy !RSA for converting lat/lon to x/y
         rotor_diameter(1) = 77.0 
         blade_length(1)   = 38.5*(1.0-0.0444) !PSU1.5 turbine
         theta_turbine(1)  = 180.0
-
-        !JDM for hard coded turbine info
-        !turb_xy_locs( 1) = 200.1
-        !turb_xy_locs( 2) = 400.1
-        !turb_xy_locs( 3) = 600.1
-        !turb_xy_locs( 4) = 800.1
-        !turb_xy_locs( 5) = 1000.1
-        !turb_xy_locs( 6) = 1200.1
-        !turb_xy_locs( 7) = 1400.1
-        !turb_xy_locs( 8) = 1600.1
-        !turb_xy_locs( 9) = 1800.1
-        !turb_xy_locs(10) = 2000.1
-        ! sgn = 1
-        ! DO i = 1,10
-        ! DO j = 1,10
-        !   x_turbine(sgn)      = turb_xy_locs(i)
-        !   y_turbine(sgn)      = turb_xy_locs(j)
-        !   hub_height(sgn)     = 80.0  
-        !   rotor_diameter(sgn) = 101.0 
-        !   blade_length(sgn)   = 49.0  
-        !   theta_turbine(sgn)  = (360.0/100.0)*(sgn-1)
-        !   sgn = sgn + 1
-        ! ENDDO
-        ! ENDDO
-        ! DO i = 1,100
-        !   print*,'i angle ',i,theta_turbine(i)
-        ! ENDDO
      ENDIF !RSA end read file or not
 
      !RSA convert x_turbine and y_turbine from lat/lon to x/y if need be
@@ -469,9 +431,6 @@ USE module_llxy !RSA for converting lat/lon to x/y
         !RSA parameters for map_set. This function defines the structure 'proj'
         !which is used below in latlon_to_ij. proj_code should be set to match
         !the projection used in namelist.wps (see share/module_llxy.F for more info)
-        ! truelat1 = 36.585 !RSA from namelist.wps
-        ! truelat2 = 36.585 !RSA from namelist.wps
-        ! stand_lon = -97.760 !RSA from namelist.wps
         knowni = 0.0 !RSA always 0 (origin)
         knownj = 0.0 !RSA always 0 (origin)
         CALL map_set(proj_code=PROJ_LC,proj=proj,lat1=lat1,lon1=lon1, &
@@ -488,17 +447,18 @@ USE module_llxy !RSA for converting lat/lon to x/y
            y_turbine(n) = jnew*dy
         ENDDO
 
-        print*,'y_turbine=',y_turbine(1)
-        print*,'x_turbine=',x_turbine(1)
-        print*,'lat1=',lat1
-        print*,'lon1=',lon1
-        print*,'dx=',dx
-        print*,'stand_lon=',stand_lon
-        print*,'truelat1=',truelat1
-        print*,'truelat2=',truelat2
+        !RSA for debugging
+        ! print*,'y_turbine=',y_turbine(1)
+        ! print*,'x_turbine=',x_turbine(1)
+        ! print*,'lat1=',lat1
+        ! print*,'lon1=',lon1
+        ! print*,'dx=',dx
+        ! print*,'stand_lon=',stand_lon
+        ! print*,'truelat1=',truelat1
+        ! print*,'truelat2=',truelat2
 
      ENDIF
-  ENDIF !RSA end first timestep
+  ENDIF !RSA end first time GAD is turned on
 
 !____________________________________________________________________________________________________________________________
 !
@@ -513,13 +473,14 @@ USE module_llxy !RSA for converting lat/lon to x/y
   dxo2 = dx/2.0
   dyo2 = dy/2.0
 
-  DO i = i_start, i_end !only for visualizing instantaneous position of multiple turbines
-  DO j = j_start, j_end
-  DO k = 1, 20
-    wp_ts(i,k,j) = 0.0
-  ENDDO
-  ENDDO
-  ENDDO
+  ! RSA/JDM for debugging
+  ! DO i = i_start, i_end !only for visualizing instantaneous position of multiple turbines
+  ! DO j = j_start, j_end
+  ! DO k = 1, 20
+  !   wp_ts(i,k,j) = 0.0
+  ! ENDDO
+  ! ENDDO
+  ! ENDDO
 
   DO i = i_start, i_end+1
     u_x(i) = (i-1)*dx
@@ -552,9 +513,9 @@ USE module_llxy !RSA for converting lat/lon to x/y
     !If turbine rectangle overlaps with tile do the following
     !the if statement actually checks if there is no overlap
     IF ( .NOT. ( (xmax_tile .LT. xmin_turb) .OR.              &  
-                 (xmin_tile .GE. xmax_turb) .OR.              &   !changed from GT
+                 (xmin_tile .GE. xmax_turb) .OR.              &
                  (ymax_tile .LT. ymin_turb) .OR.              &  
-                 (ymin_tile .GE. ymax_turb) )  ) THEN             !changed from GT
+                 (ymin_tile .GE. ymax_turb) )  ) THEN
 
       turbine_on_patch(n) = 1
     ENDIF
@@ -566,15 +527,14 @@ USE module_llxy !RSA for converting lat/lon to x/y
     !Draw ray upstream from turbine from hub to rotor_diameter using turbine yaw
     x_inflow(n) = -rotor_diameter(n)*cos(theta_turbine(n)*pi/180.0) + x_turbine(n)
     y_inflow(n) =  rotor_diameter(n)*sin(theta_turbine(n)*pi/180.0) + y_turbine(n)
-    ! write(*,*) "n=",n,"cos=",cos(theta_turbine(n)*pi/180.0),"sin=",sin(theta_turbine(n)*pi/180.0),"xin=",x_inflow(n),"yin=",y_inflow(n) !RSAtest
 
     !See if inflow location is on patch
     inflow_on_patch(n) = 0
 
     IF ( .NOT. ( (xmax_tile .LT. x_inflow(n)) .OR.              &  
-                 (xmin_tile .GE. x_inflow(n)) .OR.              &   !changed from GT
+                 (xmin_tile .GE. x_inflow(n)) .OR.              &
                  (ymax_tile .LT. y_inflow(n)) .OR.              &  
-                 (ymin_tile .GE. y_inflow(n)) )  ) THEN             !changed from GT
+                 (ymin_tile .GE. y_inflow(n)) )  ) THEN
 
       inflow_on_patch(n) = 1
     ENDIF
@@ -666,20 +626,12 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
 !____________________________________________________________________________________________________________________________
 !
-! 3. If turbine neighborhood is on patch, check if the hub is too. 
-! If so, find the wind speed at each hub location and exchange across all processors
-! Each processor must send and receive, so we cannot put this in a turbine_on_patch loop. 
+! 3. If inflow location is on patch, calculate the wind speed and direction at that location.
+! These values are exchanged across all processors.
 !____________________________________________________________________________________________________________________________
 
 ! shift wind speed for each turbine (column of v0t) back by one unit to make room
 ! for the current v0 value 
-
-  !RSA commenting out
-  ! IF ( itimestep .le. 1) THEN
-  !   v0t = 0.0
-  !   d0t = 0.0
-  !   acc_yaw_err = 0.0
-  ! ENDIF
 
   DO n = 1, n_turbines
     DO k = n_timeseries-1,1,-1
@@ -696,50 +648,31 @@ USE module_llxy !RSA for converting lat/lon to x/y
   ENDIF
 
   DO n = 1, n_turbines
-    ! IF (turbine_on_patch(n) .EQ. 1 ) THEN ! 
-    IF (inflow_on_patch(n) .EQ. 1 ) THEN
-      ! xmin_tile = u_x(i_start)
-      ! xmax_tile = u_x(i_end+1)
-      ! ymin_tile = v_y(j_start)
-      ! ymax_tile = v_y(j_end+1)
-      theta =  theta_turbine(n)*pi/180.0
 
-      !If turbine hub is within the tile do the following
-      ! IF ( (x_turbine(n) .GE. xmin_tile) .AND. (x_turbine(n) .LT. xmax_tile) .AND. &
-      !      (y_turbine(n) .GE. ymin_tile) .AND. (y_turbine(n) .LT. ymax_tile) ) THEN
+    IF (inflow_on_patch(n) .EQ. 1 ) THEN
+
+      theta =  theta_turbine(n)*pi/180.0
 
         !using w locations, will calculate cell-centered values below
         imin = minloc(abs(w_x(i_start:i_end)-x_inflow(n)),1)+i_start-1
         jmin = minloc(abs(w_y(j_start:j_end)-y_inflow(n)),1)+j_start-1
-        ! write(*,*) "xturb=",x_turbine(n),"yturb=",y_turbine(n),"imin=",imin,"jmin=",jmin !RSAtest
         iturb = minloc(abs(w_x(i_start:i_end)-x_turbine(n)),1)+i_start-1
         jturb = minloc(abs(w_y(j_start:j_end)-y_turbine(n)),1)+j_start-1
      
-        ! imin = imin-6 ! 1D Upstream
-        ! imin = imin + 2 !RSAtest
-
-        IF (imin .LT. its ) THEN
-          print*,'imin < its in phys/module_gen_act_disk.F, stopping'
-          STOP
-        ENDIF
-
         !RSA going horizontally from the hub
         DO k = kts+1, k_end
           inflow_z(k) = w_z(imin,k,jmin) - ( hgt(iturb,jturb) + hub_height(n) )
         ENDDO
         kmin=minloc(abs(inflow_z(kts+1:k_end)),1)+kts
-        !RSA following a grid line
+        !RSA retaining commented code below in case someone wants to try following a grid line
         ! DO k = kts+1, k_end
         !   turb_z(k) = w_z(imin,k,jmin) - hub_height(n) !RSA changed from u_z to w_z since we want cell centers
         ! ENDDO
         ! kmin=minloc(abs(turb_z(kts+1:k_end)),1)+kts
 
-        ! write(*,*) "n=",n,"kmin=",kmin !RSAtest
-
         u_c = 0.5 * ( u(imin,kmin,jmin) + u(imin+1,kmin,jmin) )
         v_c = 0.5 * ( v(imin,kmin,jmin) + v(imin,kmin,jmin+1) )
         v0inst = u_c*cos(theta)*cos(tilt)+v_c*sin(theta)*cos(tilt) !Instantaneous velocity component normal to the rotor.
-        ! v0inst = u(imin,kmin,jmin)*cos(theta)*cos(tilt)+v(imin,kmin,jmin)*sin(theta)*cos(tilt) !Instantaneous velocity component normal to the rotor.
 
         IF (wp_opt .EQ. 3 ) THEN
           IF ( ( u_c .GE. 0.0 ) .AND. ( v_c .LT. 0.0 ) ) THEN   !Wind direction, independent of the
@@ -748,13 +681,6 @@ USE module_llxy !RSA for converting lat/lon to x/y
              d0inst = 90.0 - atan2(u_c,v_c)*180.0/pi            !up to 360. No negative values.
           ENDIF
         ENDIF
-        ! IF (wp_opt .EQ. 3 ) THEN
-        !   IF ( ( u(imin,kmin,jmin) .GE. 0.0 ) .AND. ( v(imin,kmin,jmin) .LT. 0.0 ) ) THEN    !Wind direction, independent of the
-        !      d0inst = 360.0 - (atan2(u(imin,kmin,jmin),v(imin,kmin,jmin) )*180.0/pi - 90.0)  !rotor angle. 0 and 360 are Westerly. 
-        !   ELSE                                                                               !Positive values are counterclockwise
-        !      d0inst = 90.0 - atan2(u(imin,kmin,jmin),v(imin,kmin,jmin) )*180.0/pi            !up to 360. No negative values.
-        !   ENDIF
-        ! ENDIF    
 
 #ifdef DM_PARALLEL
         tag=n
@@ -771,7 +697,6 @@ USE module_llxy !RSA for converting lat/lon to x/y
         ENDIF
 #endif
 
-      ! ENDIF ! hub is on the tile
     ENDIF ! inflow location on patch
   ENDDO ! n_turbines
 
@@ -808,9 +733,6 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
   DO n = 1, n_turbines
 
-    !RSA moving down to make sure that all procs have the same v0t, d0t, and acc_yaw_err
-    ! IF (turbine_on_patch(n) .EQ. 1 ) THEN !only do this if part of the turbine is on the patch
-
       dum = 0.0                         ! Looking for problems...
       DO k = 1,n_timeseries
         dum = dum + v0t(k,n)
@@ -832,13 +754,13 @@ USE module_llxy !RSA for converting lat/lon to x/y
       DO k = 1,n_timeseries
          dum = dum + v0t(k,n)
       ENDDO
-      v0 = dum/real(n_timeseries) !Running time-average
+      v0t_avg = dum/real(n_timeseries) !Running time-average
 
       dum = 0.0                        ! Looking for problems...
       DO k = 1,n_timeseries
          dum = dum + d0t(k,n)
       ENDDO
-      d0 = dum/real(n_timeseries) !Running time-average
+      d0t_avg = dum/real(n_timeseries) !Running time-average
 
 
       IF (wp_opt .EQ. 3) THEN
@@ -857,18 +779,11 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
         IF (yawing(n) .EQ. 0 ) THEN
 
-          ! d0t(1,n)=d0n(n) !RSA moving up
-          ! delta = theta_turbine(n) - d0t(1,n)
-          ! IF ( delta .LT. -180.0 ) THEN 
-          !   delta = theta_turbine(n) + ( 360.0 - d0t(1,n) )
-          ! ELSE IF (delta .GE. 180.0 ) THEN 
-          !   delta = theta_turbine(n) - ( 360.0 + d0t(1,n) )
-          ! ENDIF
-          delta = theta_turbine(n) - d0
+          delta = theta_turbine(n) - d0t_avg
           IF ( delta .LT. -180.0 ) THEN 
-            delta = theta_turbine(n) + ( 360.0 - d0 )
+            delta = theta_turbine(n) + ( 360.0 - d0t_avg )
           ELSE IF (delta .GE. 180.0 ) THEN 
-            delta = theta_turbine(n) - ( 360.0 + d0 )
+            delta = theta_turbine(n) - ( 360.0 + d0t_avg )
           ENDIF
 
           sgn = 1.0
@@ -878,25 +793,14 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
         ELSE ! turbine is yawing or ready to start
 
-         ! dum = 0.0
-         ! DO k = 1,n_timeseries
-         !   dum = dum + d0t(k,n)
-         ! ENDDO
-
-         ! yaw_new = dum/real(n_timeseries)
-         yaw_new = d0 !d0 calculated above
+         yaw_new = d0t_avg !calculated above
          yaw_inc = yaw_rate*dt
-         ! delta = theta_turbine(n) - yaw_new  
-         ! IF ( delta .LT. -180.0 ) THEN 
-         !   delta = theta_turbine(n) + ( 360.0 - d0t(1,n) )
-         ! ELSE IF (delta .GE. 180.0 ) THEN 
-         !   delta = theta_turbine(n) - ( 360.0 + d0t(1,n) )
-         ! ENDIF
+
          delta = theta_turbine(n) - yaw_new  
          IF ( delta .LT. -180.0 ) THEN 
-           delta = theta_turbine(n) + ( 360.0 - d0 )
+           delta = theta_turbine(n) + ( 360.0 - d0t_avg )
          ELSE IF (delta .GE. 180.0 ) THEN 
-           delta = theta_turbine(n) - ( 360.0 + d0 )
+           delta = theta_turbine(n) - ( 360.0 + d0t_avg )
          ENDIF
 
          sgn = 1.0
@@ -922,12 +826,10 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
       theta =  theta_turbine(n)*pi/180.0
 
-      IF ( v0 .lt. 0.0 ) THEN
-        v0 = 0.0
-      ENDIF
+      IF ( (v0t_avg .lt. cutinspd(n)) .or. (v0t_avg .gt. cutoutspd(n)) ) GOTO 200 
 
-      rpm   = calc_rpm_psu15( v0 ) ! Use time average velocity at hub location for rpm and pitch
-      pitchdeg = calc_pitch_psu15( v0 )
+      rpm   = calc_rpm_psu15( v0t_avg ) ! Use time average velocity at hub location for rpm and pitch
+      pitchdeg = calc_pitch_psu15( v0t_avg )
    
       DO j = j_start, j_end
         DO i = i_start, i_end
@@ -1038,18 +940,18 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
 !------ X ---- 
 
-	     IF ( (ru(i,k,j) .le. radmin) .and. (ru(i,k,j) .gt. -0.001) ) then !HUB-----------------------------------	
+        IF ( (ru(i,k,j) .le. radmin) .and. (ru(i,k,j) .gt. -0.001) ) then !HUB-----------------------------------	
           
-	        fn = 0.5*rho*v0*v0*cdh  !NM only need force per unit area
+           fn = 0.5*rho*v0*v0*cdh  !NM only need force per unit area
 
-	        ft = 0.0 !NM no tangential force
+           ft = 0.0 !NM no tangential force
 
-	        !NM including off set of hub from tower hoff in + dru
-	        !direction or opposite of wind direction U
+           !NM including off set of hub from tower hoff in + dru
+           !direction or opposite of wind direction U
 
-	        acc_u = (1.0/adenom)*exp(-((dru(i,j)-hoff)**2)/bdenom) !NM 1-D gaussian, hub has no tilt.
+           acc_u = (1.0/adenom)*exp(-((dru(i,j)-hoff)**2)/bdenom) !NM 1-D gaussian, hub has no tilt.
  
-                fx = fn*cos(theta) 	 
+                fx = fn*cos(theta) 
  
                 ru_tendf(i,k,j) = ru_tendf(i,k,j) &
                                   - muu(i,j)*acc_u*cnst*fx
@@ -1057,50 +959,48 @@ USE module_llxy !RSA for converting lat/lon to x/y
 !JDM	        thrust(i,k,j) = thrust(i,k,j)-fn*cos(theta)*acc_u     		
                 !!thrust everywhere is equal to current thrust plus force distribution due to gaussian times normal force
 
-	     ELSE !GAD-------------------------------------------------------------------------------------------------
+        ELSE !GAD-------------------------------------------------------------------------------------------------
 
-	        IF (tilt .eq. 0.0) THEN !No Tilt-----------------------------------------------------------------------
+          IF (tilt .eq. 0.0) THEN !No Tilt-----------------------------------------------------------------------
 
-                   drut = dru(i,j)-hoff	!distance only depends on x value!!!if theta is zero the normal distance will be x0
+             drut = dru(i,j)-hoff !distance only depends on x value!!!if theta is zero the normal distance will be x0
 
-                   radius = sqrt( dau(i,j)**2 + dzu(i,k,j)**2 )
+             radius = sqrt( dau(i,j)**2 + dzu(i,k,j)**2 )
 
-                   zeta = atan2( dzu(i,k,j), dau(i,j) )
+             zeta = atan2( dzu(i,k,j), dau(i,j) )
 
-                ELSE !Tilt ------------------------------------------------------------------------------------------
+          ELSE !Tilt ------------------------------------------------------------------------------------------
 
 ! drut-----------------
 
-                   drut = calc_yprime( 1.0/tan(tilt), 1.0, 0.0, (dru(i,j)-hoff), dzu(i,k,j) ) 
+             drut = calc_yprime( 1.0/tan(tilt), 1.0, 0.0, (dru(i,j)-hoff), dzu(i,k,j) ) 
 
 ! zd-----------------
- 
-                   zd = calc_yprime( -tan(tilt), 1.0, 0.0, (dru(i,j)-hoff), dzu(i,k,j) ) 
 
-		   radius = sqrt( dau(i,j)**2 + zd**2 ) !NM new radial distance to tilted turbine:
+             zd = calc_yprime( -tan(tilt), 1.0, 0.0, (dru(i,j)-hoff), dzu(i,k,j) ) 
 
-                   zeta = atan2( zd, dau(i,j) )
+             radius = sqrt( dau(i,j)**2 + zd**2 ) !NM new radial distance to tilted turbine:
 
-!                   WRITE(*,201),'i,j,k,dru,drut',i,j,k,drut,zd
+             zeta = atan2( zd, dau(i,j) )
 
-                ENDIF !Tilt or No Tilt-------------------------------------------------------------------------------
+           ENDIF !Tilt or No Tilt-------------------------------------------------------------------------------
 
-                acc_u = (1.0/adenom2)*exp(-(drut**2)/bdenom2) !NM 1-D
+             acc_u = (1.0/adenom2)*exp(-(drut**2)/bdenom2) !NM 1-D
 
-                !RSA adding logic to prevent fx from being NaN. See explanation in calc_fnft below.
-                if ( v0 .gt. 0.0 ) then
-                   fnft = calc_fnft_psu15( v0, rho, blades, blade_length(n), rotor_diameter(n),   &
+             !RSA adding logic to prevent fx from being NaN. See explanation in calc_fnft below.
+             if ( v0 .gt. 0.0 ) then
+                fnft = calc_fnft_psu15( v0, rho, blades, blade_length(n), rotor_diameter(n),   &
                                            radius, pitchdeg, rpm, dscale, cscale) 
 
-                   fn = fnft(1)
-                   ft = fnft(2)
+                fn = fnft(1)
+                ft = fnft(2)
      
-                   fx = fn*cos(theta)*cos(tilt) + ft*sin(zeta)*sin(theta) - ft*cos(zeta)*sin(tilt)*cos(theta)
-                else
-                   !RSA set fx to 0 for now, but turbine should eventually yaw into place.
-                   ! write(*,*) "RSA to prevent NaNs, skipping call to calc_fnft for fx: i,j,k=",i,j,k 
-                   fx = 0.0
-                endif
+                fx = fn*cos(theta)*cos(tilt) + ft*sin(zeta)*sin(theta) - ft*cos(zeta)*sin(tilt)*cos(theta)
+              else
+                !RSA set fx to 0 for now, but turbine should eventually yaw into place.
+                ! write(*,*) "RSA to prevent NaNs, skipping call to calc_fnft for fx: i,j,k=",i,j,k 
+                fx = 0.0
+              endif
                 
 !JDM TEST SIGN 12/2014     fx = fn*cos(theta)*cos(tilt) 
 !JDM TEST SIGN 12/2014     fx = ft*sin(zeta)*sin(theta) 
@@ -1110,54 +1010,54 @@ USE module_llxy !RSA for converting lat/lon to x/y
 !print*,'v0, pitchdeg, rpm',v0, pitchdeg, rpm
 !print*,'fn,ft,fx,accu',fn,ft,fx,acc_u
 
-                ru_tendf(i,k,j) = ru_tendf(i,k,j) &
+              ru_tendf(i,k,j) = ru_tendf(i,k,j) &
                                  - muu(i,j)*acc_u*cnst*fx
 
-                wp_ts(i,k,j) = -1.0*muu(i,j)*acc_u*cnst*fx
+              ! wp_ts(i,k,j) = -1.0*muu(i,j)*acc_u*cnst*fx
 
-              ENDIF !Hub or GAD-----------------------------------------------------------------------------------------
+        ENDIF !Hub or GAD-----------------------------------------------------------------------------------------
 
 !------- Y ----
 
-	      IF ( (rv(i,k,j) .le. radmin) .and. (rv(i,k,j) .gt. -0.001) ) then !HUB------------------------------------	
+        IF ( (rv(i,k,j) .le. radmin) .and. (rv(i,k,j) .gt. -0.001) ) then !HUB------------------------------------	
 
-		  fn = 0.5*rho*v0*v0*cdh 
+           fn = 0.5*rho*v0*v0*cdh 
 
-		  ft = 0.0
+           ft = 0.0
 
-		  acc_v = (1.0/adenom)*exp(-((drv(i,j)-hoff)**2)/bdenom) 
+           acc_v = (1.0/adenom)*exp(-((drv(i,j)-hoff)**2)/bdenom) 
 
-		  fy = fn*sin(theta) 
+           fy = fn*sin(theta) 
 
-		  rv_tendf(i,k,j) = rv_tendf(i,k,j) &
+           rv_tendf(i,k,j) = rv_tendf(i,k,j) &
                                    - muv(i,j)*acc_v*cnst*fy
 
-	      ELSE !GAD-------------------------------------------------------------------------------------------------	
+        ELSE !GAD-------------------------------------------------------------------------------------------------	
 
-                 IF (tilt .eq. 0.0) THEN !No Tilt-----------------------------------------------------------------------
+           IF (tilt .eq. 0.0) THEN !No Tilt-----------------------------------------------------------------------
 
-        	    drvt = drv(i,j)-hoff	!distance only depends on x value !!!if theta is zero the normal distance will be x0
+               drvt = drv(i,j)-hoff !distance only depends on x value !!!if theta is zero the normal distance will be x0
 
-                    radius = sqrt( dav(i,j)**2 + dzv(i,k,j)**2 )
+               radius = sqrt( dav(i,j)**2 + dzv(i,k,j)**2 )
 
-                    zeta = atan2( dzv(i,k,j), dav(i,j) )
+               zeta = atan2( dzv(i,k,j), dav(i,j) )
 
-                 ELSE !Tilt---------------------------------------------------------------------------------------------
+           ELSE !Tilt---------------------------------------------------------------------------------------------
 
-                    drvt = calc_yprime( 1.0/tan(tilt), 1.0, 0.0, (drv(i,j)-hoff), dzv(i,k,j) )  
+               drvt = calc_yprime( 1.0/tan(tilt), 1.0, 0.0, (drv(i,j)-hoff), dzv(i,k,j) )  
 
-                    zd = calc_yprime( -tan(tilt), 1.0, 0.0, (drv(i,j)-hoff), dzv(i,k,j) )
+               zd = calc_yprime( -tan(tilt), 1.0, 0.0, (drv(i,j)-hoff), dzv(i,k,j) )
 
-                    radius = sqrt( dav(i,j)**2 + zd**2 )
+               radius = sqrt( dav(i,j)**2 + zd**2 )
 
-                    zeta = atan2( zd, dav(i,j) )
+               zeta = atan2( zd, dav(i,j) )
 
-		 ENDIF !Tilt or No Tilt-------------------------------------------------------------------------------
+         ENDIF !Tilt or No Tilt-------------------------------------------------------------------------------
 
-                 acc_v = (1.0/adenom2)*exp(-(drvt**2)/bdenom2) !NM 1-D
+               acc_v = (1.0/adenom2)*exp(-(drvt**2)/bdenom2) !NM 1-D
 
-                !RSA adding logic to prevent fy from being NaN. See explanation in calc_fnft below.
-                if ( v0 .gt. 0.0 ) then
+               !RSA adding logic to prevent fy from being NaN. See explanation in calc_fnft below.
+               if ( v0 .gt. 0.0 ) then
                    fnft = calc_fnft_psu15( v0, rho, blades, blade_length(n), rotor_diameter(n),   &
                                            radius, pitchdeg, rpm, dscale, cscale)  
 
@@ -1175,10 +1075,10 @@ USE module_llxy !RSA for converting lat/lon to x/y
 !JDM TEST SIGN 12/2014      fy = -ft*sin(zeta)*cos(theta)
 !JDM TEST SIGN 12/2014      fy = -ft*cos(zeta)*sin(tilt)*sin(theta)
 
-                 rv_tendf(i,k,j) = rv_tendf(i,k,j) &
+                rv_tendf(i,k,j) = rv_tendf(i,k,j) &
                                   - muv(i,j)*acc_v*cnst*fy
 
-!JDM                     wp_ts(i,k,j) = -1.0*muv(i,j)*acc_v*cnst*fy
+!JDM            wp_ts(i,k,j) = -1.0*muv(i,j)*acc_v*cnst*fy
 
               ENDIF !Hub or GAD------------------------------------------------------------------------------------
 
@@ -1186,7 +1086,7 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
               IF (tilt .eq. 0.0) THEN !No Tilt --------------------------------------------------------------------
 
-        	 drwt = drw(i,j)-hoff	!distance only depends on x value              			!!!if theta is zero the normal distance will be x0
+                 drwt = drw(i,j)-hoff !distance only depends on x value 	!!!if theta is zero the normal distance will be x0
 
                  radius = sqrt( daw(i,j)**2 + dzw(i,k,j)**2 )
 
@@ -1194,17 +1094,17 @@ USE module_llxy !RSA for converting lat/lon to x/y
 
               ELSE !Tilt ------------------------------------------------------------------------------------------
 
-		 drwt = calc_yprime( 1.0/tan(tilt), 1.0, 0.0, (drw(i,j)-hoff), dzw(i,k,j) ) 
-				 
+                 drwt = calc_yprime( 1.0/tan(tilt), 1.0, 0.0, (drw(i,j)-hoff), dzw(i,k,j) ) 
+ 
                  zd = calc_yprime( -tan(tilt), 1.0, 0.0, (drw(i,j)-hoff), dzw(i,k,j) ) 
-		
-		 radius = sqrt( daw(i,j)**2 + zd**2 )
+
+                 radius = sqrt( daw(i,j)**2 + zd**2 )
 
                  zeta = atan2( zd, daw(i,j) ) 
 
-	      ENDIF !Tilt or No Tilt-------------------------------------------------------------------------------
-	
-	      acc_w = 	(1.0/adenom2)*exp(-(drwt**2)/bdenom2) !NM 1-D
+              ENDIF !Tilt or No Tilt-------------------------------------------------------------------------------
+
+              acc_w = (1.0/adenom2)*exp(-(drwt**2)/bdenom2) !NM 1-D
 
               !RSA adding logic to prevent fz from being NaN. See explanation in calc_fnft below.
               if ( v0 .gt. 0.0 ) then
@@ -1227,7 +1127,7 @@ USE module_llxy !RSA for converting lat/lon to x/y
               rw_tendf(i,k,j) = rw_tendf(i,k,j)  &
                               - mut(i,j)*acc_w*cnst*fz
 
-!JDM                 wp_ts(i,k,j) = -1.0*mut(i,j)*acc_w*cnst*fz
+!JDM          wp_ts(i,k,j) = -1.0*mut(i,j)*acc_w*cnst*fz
  
 
 
@@ -1247,25 +1147,11 @@ USE module_llxy !RSA for converting lat/lon to x/y
         ENDDO         ! k loop
       ENDDO       ! i loop
 
-    ! ELSE !if turbine not on patch
-
-    !   dum = 0.0
-    !   DO k = 1,n_timeseries
-    !     dum = dum + v0t(k,n)
-    !   ENDDO
-
-    !   !If this is the first time through the GAD routine,
-    !   !RSA Assign last  element of v0t to 1.0 so that the input file will not be
-    !   !read again. These values should never be used because there is no turbine
-    !   !on this patch.
-    !   IF ( dum .eq. 0. ) THEN  
-    !      v0t(n_timeseries,n) = 1.0 
-    !   ENDIF
-
     ENDIF !turbine_on_patch = 1
-  ENDDO  ! n loop over all turbines
 
-201 format (a18,3I6,2F12.6)
+200 CONTINUE !time-averaged inflow is < cutin or > cutout speed
+
+  ENDDO  !n loop over all turbines
 
 END SUBROUTINE gen_act_disk
 
@@ -1341,15 +1227,15 @@ SUBROUTINE calc_distance( x_turb, y_turb, theta_turb,     &
   IF ( ( theta .LT. 0.5*pi ) .OR. (theta .GT. 1.5*pi) ) THEN   ! Quadrants 1 or 4 	
         aa = tan(theta)                                          
         ba = -1.0                      !neg because for ax + by + c = 0, slope m = -a/b                                        
-     ELSEIF ( theta .EQ. 0.5*pi ) THEN	                   ! INFINITE SLOPE
+     ELSEIF ( theta .EQ. 0.5*pi ) THEN                   ! INFINITE SLOPE
         aa = 1.0                       !x coordinate of point p 
-	ba = 0.0                      
-     ELSEIF ( theta .EQ. 1.5*pi ) THEN	                   ! INFINITE SLOPE
-    	aa = -1.0                      !negative of x coordinate of point p 
+        ba = 0.0                      
+     ELSEIF ( theta .EQ. 1.5*pi ) THEN                   ! INFINITE SLOPE
+        aa = -1.0                      !negative of x coordinate of point p 
         ba = 0.0
      ELSE                                                  ! Quadrants 2 or 3 	
-     	aa = -tan(theta)
-	ba = 1.0	
+        aa = -tan(theta)
+        ba = 1.0
      ENDIF
      ca = 0.0                    !no slope intercept, center of rotor plane is the origin
 
@@ -1358,7 +1244,7 @@ SUBROUTINE calc_distance( x_turb, y_turb, theta_turb,     &
 
      IF ( theta .EQ. 0.5*pi ) THEN
         ar = 0.0
-	br = -1.0                  !distance only depends on y value
+        br = -1.0                  !distance only depends on y value
      ELSEIF ( theta .EQ. 0.) THEN 
         ar = -1.0                  !distance only depends on x value, if theta is zero the normal distance will be x0
         br = 0.0  
@@ -1366,14 +1252,14 @@ SUBROUTINE calc_distance( x_turb, y_turb, theta_turb,     &
         ar = -1.0/tan(theta)         !Since perpendicular, take negative reciprocal for slope
         br = -1.0                  !Must correspond to shortest line
      ELSEIF ( theta .EQ. 1.5*pi ) THEN
-     	ar = 0.0
-	br = 1.0                   !distance only depends on y value
+        ar = 0.0
+        br = 1.0                   !distance only depends on y value
      ELSEIF ( theta .EQ. pi ) THEN 
-     	ar = 1.0                   !distance only depends on x value
-	br = 0.0
+        ar = 1.0                   !distance only depends on x value
+        br = 0.0
      ELSE                          !theta between pi and 2pi
-	ar = 1.0/tan(theta)
-	br = 1.0
+        ar = 1.0/tan(theta)
+        br = 1.0
      ENDIF
      cr = 0.0
 
