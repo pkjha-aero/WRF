@@ -38,6 +38,7 @@ USE module_llxy !RSA for converting lat/lon to x/y
                             rdzw,  dx, dy, dt,            &
                             v0t, d0t, itimestep,          &
                             xlat_v, xlong_u,              & !RSA
+                            hgt,                          & !RSA
                             ids, ide, jds, jde, kds, kde, &
                             ims, ime, jms, jme, kms, kme, &
                             ips, ipe, jps, jpe, kps, kpe, &
@@ -141,7 +142,8 @@ USE module_llxy !RSA for converting lat/lon to x/y
   REAL, DIMENSION( ims:ime, jms:jme ),           INTENT( IN  ) &
   :: muu         & ! column pressure at u nodes  (kg m-1 s-2)
    , muv         & !                    v
-   , mut           !                    t
+   , mut         & !                    t
+   , hgt           ! RSA terrain height          (m)
 
   REAL, DIMENSION( ims:ime, kms:kme, jms:jme ),  INTENT( IN  ) &
   :: rdzw          !inverse vertical grid spacing at w-nodes (m-1)
@@ -202,14 +204,16 @@ USE module_llxy !RSA for converting lat/lon to x/y
    , rw         !                    w                           (m)
 
   REAL, DIMENSION( kts:kte ) &
-  :: turb_z     ! z coordinate at a turbine                      (m)  
+  :: turb_z   & ! z coordinate at a turbine                      (m)  
+   , inflow_z   !RSA z coordinate at inflow location             (m)
 
   REAL :: xmin_tile, xmax_tile, ymin_tile, ymax_tile
   REAL :: xmin_turb, xmax_turb, ymin_turb, ymax_turb
   REAL :: zmax_turb
   REAL :: start_fac
 
-  INTEGER :: i, j, k, n, i_start, j_start, i_end, j_end, k_end, k_top, imin, jmin, kmin
+  INTEGER :: i, j, k, n, i_start, j_start, i_end, j_end, k_end, k_top, imin, jmin, kmin, &
+             iturb, jturb
 
   REAL :: dxo2, dyo2, zmin_k, zmin_kp1, zmax_k, zmax_kp1, dz, eps
 
@@ -708,6 +712,8 @@ USE module_llxy !RSA for converting lat/lon to x/y
         imin = minloc(abs(w_x(i_start:i_end)-x_inflow(n)),1)+i_start-1
         jmin = minloc(abs(w_y(j_start:j_end)-y_inflow(n)),1)+j_start-1
         ! write(*,*) "xturb=",x_turbine(n),"yturb=",y_turbine(n),"imin=",imin,"jmin=",jmin !RSAtest
+        iturb = minloc(abs(w_x(i_start:i_end)-x_turbine(n)),1)+i_start-1
+        jturb = minloc(abs(w_y(j_start:j_end)-y_turbine(n)),1)+j_start-1
      
         ! imin = imin-6 ! 1D Upstream
         ! imin = imin + 2 !RSAtest
@@ -717,11 +723,19 @@ USE module_llxy !RSA for converting lat/lon to x/y
           STOP
         ENDIF
 
+        !RSA going horizontally from the hub
         DO k = kts+1, k_end
-          turb_z(k) = u_z(imin,k,jmin) - hub_height(n)
+          inflow_z(k) = w_z(imin,k,jmin) - ( hgt(iturb,jturb) + hub_height(n) )
         ENDDO
+        kmin=minloc(abs(inflow_z(kts+1:k_end)),1)+kts
+        !RSA following a grid line
+        ! DO k = kts+1, k_end
+        !   turb_z(k) = w_z(imin,k,jmin) - hub_height(n) !RSA changed from u_z to w_z since we want cell centers
+        ! ENDDO
+        ! kmin=minloc(abs(turb_z(kts+1:k_end)),1)+kts
 
-        kmin=minloc(abs(turb_z(kts+1:k_end)),1)+kts
+        ! write(*,*) "n=",n,"kmin=",kmin !RSAtest
+
         u_c = 0.5 * ( u(imin,kmin,jmin) + u(imin+1,kmin,jmin) )
         v_c = 0.5 * ( v(imin,kmin,jmin) + v(imin,kmin,jmin+1) )
         v0inst = u_c*cos(theta)*cos(tilt)+v_c*sin(theta)*cos(tilt) !Instantaneous velocity component normal to the rotor.
