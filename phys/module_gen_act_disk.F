@@ -52,6 +52,11 @@ USE module_llxy !RSA for converting lat/lon to x/y
 !
 ! Lookup tables use generic Penn State 1.5 MW GE SLE turbine (approximate).
 !
+! Note that wind direction and turbine yaw are measured counterclockwise from
+! 0 deg. for a westerly wind / west-facing turbine. Thus, 90 is a southerly
+! wind / south-facing turbine, 180 is an easterly wind / east-facing turbine,
+! 270 is a northerly wind / north-facing turbine, up to 360 deg.
+!
 ! Last modified 10/2018 by RSA and JDM. 
 ! - Code will not compute GAD forces if flow is from behind the turbine; turbine
 ! must first yaw into mean flow direction (when yaw error exceeds threshold) 
@@ -525,8 +530,11 @@ USE module_llxy !RSA for converting lat/lon to x/y
   DO n = 1, n_turbines
 
     !Draw ray upstream from turbine from hub to rotor_diameter using turbine yaw
+    !RSA recall theta_turbine is measured counterclockwise starting at 0 deg. for a
+    !west-facing turbine (ie. 90 facing south, 180 facing east, 270 facing
+    !north, 360 back to facing west)
     x_inflow(n) = -rotor_diameter(n)*cos(theta_turbine(n)*pi/180.0) + x_turbine(n)
-    y_inflow(n) =  rotor_diameter(n)*sin(theta_turbine(n)*pi/180.0) + y_turbine(n)
+    y_inflow(n) = -rotor_diameter(n)*sin(theta_turbine(n)*pi/180.0) + y_turbine(n)
 
     !See if inflow location is on patch
     inflow_on_patch(n) = 0
