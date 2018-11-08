@@ -215,8 +215,8 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
   REAL :: zmax_turb
   REAL :: start_fac
 
-  INTEGER :: i, j, k, n, i_start, j_start, i_end, j_end, k_end, k_top, imin, jmin, kmin, &
-             iturb, jturb
+  INTEGER :: i, j, k, n, i_start, j_start, i_end, j_end, k_end, k_top, i_inflow, j_inflow, k_inflow, &
+             i_turbine, j_turbine
 
   REAL :: dxo2, dyo2, zmin_k, zmin_kp1, zmax_k, zmax_kp1, dz, eps
 
@@ -668,24 +668,19 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
       theta =  theta_turbine(n)*pi/180.0
 
         !using w locations, will calculate cell-centered values below
-        imin = minloc(abs(w_x(i_start:i_end)-x_inflow(n)),1)+i_start-1
-        jmin = minloc(abs(w_y(j_start:j_end)-y_inflow(n)),1)+j_start-1
-        iturb = minloc(abs(w_x(i_start:i_end)-x_turbine(n)),1)+i_start-1
-        jturb = minloc(abs(w_y(j_start:j_end)-y_turbine(n)),1)+j_start-1
-     
-        !RSA going horizontally from the hub
-        DO k = kts+1, k_end
-          inflow_z(k) = w_z(imin,k,jmin) - ( hgt(iturb,jturb) + hub_height(n) )
-        ENDDO
-        kmin=minloc(abs(inflow_z(kts+1:k_end)),1)+kts
-        !RSA retaining commented code below in case someone wants to try following a grid line
-        ! DO k = kts+1, k_end
-        !   turb_z(k) = w_z(imin,k,jmin) - hub_height(n) !RSA changed from u_z to w_z since we want cell centers
-        ! ENDDO
-        ! kmin=minloc(abs(turb_z(kts+1:k_end)),1)+kts
+        i_inflow = minloc(abs(w_x(i_start:i_end)-x_inflow(n)),1)+i_start-1
+        j_inflow = minloc(abs(w_y(j_start:j_end)-y_inflow(n)),1)+j_start-1
 
-        u_c = 0.5 * ( u(imin,kmin,jmin) + u(imin+1,kmin,jmin) )
-        v_c = 0.5 * ( v(imin,kmin,jmin) + v(imin,kmin,jmin+1) )
+        !RSA find k index of inflow point by following a grid line
+        !Note that w_z is AGL, ie w_z(:,kts,:)=0.0
+        DO k = kts+1, k_end
+          inflow_z(k) = w_z(i_inflow,k,j_inflow) - hub_height(n)
+        ENDDO
+        k_inflow=minloc(abs(inflow_z(kts+1:k_end)),1)+kts
+        IF (inflow_z(k_inflow) .GT. 0.0) k_inflow = k_inflow - 1    
+
+        u_c = 0.5 * ( u(i_inflow,k_inflow,j_inflow) + u(i_inflow+1,k_inflow,j_inflow) )
+        v_c = 0.5 * ( v(i_inflow,k_inflow,j_inflow) + v(i_inflow,k_inflow,j_inflow+1) )
         v0inst = u_c*cos(theta)*cos(tilt)+v_c*sin(theta)*cos(tilt) !Instantaneous velocity component normal to the rotor.
 
         IF (wp_opt .EQ. 3 ) THEN
