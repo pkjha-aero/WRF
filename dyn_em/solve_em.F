@@ -4473,29 +4473,33 @@ BENCH_END(bc_2d_tim)
     !$OMP PARALLEL DO   &
     !$OMP PRIVATE ( ij )
     DO ij = 1 , grid%num_tiles
-       CALL cell_centered_calc(grid%uts, grid%vts, grid%wts,        &
-                               grid%tts, grid%pts, grid%tkets,      &
-                               grid%zts, grid%t11ts, grid%t22ts,    &
-                               grid%t33ts, grid%t12ts, grid%t13ts,  &
-                               grid%t23ts, grid%h3ts, grid%usts,    &
-                               grid%z0ts, grid%u_2, grid%v_2,       &
-                               grid%w_2, grid%t_2, grid%p,          &
-                               grid%pb, grid%tke_2, dz8w,           &
-                               nba_mij(ims,kms,jms,P_m11),          &
-                               nba_mij(ims,kms,jms,P_m22),          &
-                               nba_mij(ims,kms,jms,P_m33),          &
-                               nba_mij(ims,kms,jms,P_m12),          &
-                               nba_mij(ims,kms,jms,P_m13),          &
-                               nba_mij(ims,kms,jms,P_m23),          &
-                               nba_mij(ims,kms,jms,P_mh3),          &
-                               grid%ustm, grid%znt,                  &
-                               config_flags%ts_loc_i,               &
-                               config_flags%ts_loc_j,               &
-                               ids, ide, jds, jde, kds, kde,        &
-                               ims, ime, jms, jme, kms, kme,        &
-                               grid%i_start(ij), grid%i_end(ij),    &
-                               grid%j_start(ij), grid%j_end(ij),    &
-                               k_start, k_end                        )
+       CALL cell_centered_calc(grid%uts, grid%vts, grid%wts,          &
+                               ! grid%tts, grid%pts,                    & 
+                               grid%tkets,                            &
+                               grid%zts,                              &
+                               ! grid%t11ts, grid%t22ts,      &
+                               ! grid%t33ts, grid%t12ts, grid%t13ts,    &
+                               ! grid%t23ts, grid%h3ts, grid%usts,      &
+                               ! grid%z0ts,                           & 
+                               grid%u_2, grid%v_2,                    &
+                               grid%w_2,                              &
+                               ! grid%t_2, grid%p,                      &
+                               ! grid%pb,                               &
+                               grid%tke_2,                            &
+                               grid%ph_2, grid%phb,                   &
+                               ! nba_mij(ims,kms,jms,P_m11),            &
+                               ! nba_mij(ims,kms,jms,P_m22),            &
+                               ! nba_mij(ims,kms,jms,P_m33),            &
+                               ! nba_mij(ims,kms,jms,P_m12),            &
+                               ! nba_mij(ims,kms,jms,P_m13),            &
+                               ! nba_mij(ims,kms,jms,P_m23),            &
+                               ! nba_mij(ims,kms,jms,P_mh3),            &
+                               ! grid%ustm, grid%znt,                   &
+                               ids, ide, jds, jde, kds, kde,          &
+                               ims, ime, jms, jme, kms, kme,          &
+                               grid%i_start(ij), grid%i_end(ij),      &
+                               grid%j_start(ij), grid%j_end(ij),      &
+                               k_start, k_end                          )
 
     END DO
     !$OMP END PARALLEL DO

@@ -149,7 +149,7 @@ FUNCTION calc_rpm_ge16( x ) result( rpm )
 
 1 CONTINUE
  
-PRINT*,x,rpm
+!PRINT*,x,rpm
 !_________________________________________________________________________
 
 END FUNCTION calc_rpm_ge16
