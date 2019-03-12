@@ -32,6 +32,7 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
                             blade_length,                 &
                             theta_turbine,                &
                             cutinspd, cutoutspd,          & !RSA
+                            turb_power,                   & !RSA
                             acc_yaw_err,                  & 
                             wp_acc_u, wp_acc_v, wp_acc_w, & ! these variables likely not needed. 
                             wp_ts,                        &
@@ -41,8 +42,8 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
                             muu, muv, mut,                &
                             rdzw,  dx, dy, dt,            &
                             v0t, d0t, itimestep,          &
-                            xlat_v, xlong_u,              & !RSA
-                            hgt,                          & !RSA
+                            xlat_v, xlong_u, hgt,         & !RSA
+                            fnm, fnp,                     & !RSA
                             ids, ide, jds, jde, kds, kde, &
                             ims, ime, jms, jme, kms, kme, &
                             ips, ipe, jps, jpe, kps, kpe, &
@@ -124,7 +125,8 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
    , blade_length   & ! blade_length                         (m)
    , theta_turbine  & ! angle of rotor plane w.r.t. x axis (deg)
    , cutinspd       & ! turbine cutin speed                (m/s)
-   , cutoutspd        ! turbine cutout speed               (m/s)
+   , cutoutspd      & ! turbine cutout speed               (m/s)
+   , turb_power       ! turbine power output          (kg*m2/s3)
 
   REAL, DIMENSION( n_turbines ),                 INTENT(INOUT) & 
   ::  acc_yaw_err
@@ -147,6 +149,9 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
    , muv         & !                    v
    , mut         & !                    t
    , hgt           ! RSA terrain height          (m)
+
+  REAL, DIMENSION( kms:kme ),                    INTENT( IN  ) &
+  :: fnm, fnp      ! RSA for v0_w calculation
 
   REAL, DIMENSION( ims:ime, kms:kme, jms:jme ),  INTENT( IN  ) &
   :: rdzw          !inverse vertical grid spacing at w-nodes (m-1)
@@ -184,7 +189,8 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
    , v_z           !                v       (m)
    
   REAL, DIMENSION( its-1:ite+1, kts:kte, jts-1:jte+1 ) &
-  :: w_z           !z coordinate of w-nodes  (m)
+  :: w_z         & !z coordinate of w-nodes  (m)
+   , c_z           !z coordinate of c-nodes  (m) 
 
   REAL, DIMENSION( its:ite, jts:jte ) &
   :: dru       & !normal distance from u-nodes to the rotor plane (m)
@@ -199,12 +205,17 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
   REAL, DIMENSION( its-1:ite+1, kts:kte, jts-1:jte+1 ) &
   :: dzu       & !normal distance from u-nodes to the rotor plane (m)
    , dzv       & !                    v                           (m)
-   , dzw         !                    w                           (m)
+   , dzw       & !                    w                           (m)
+   , dzc         !                    c                           (m)
 
   REAL, DIMENSION( its-1:ite+1, kts:kte, jts-1:jte+1 ) &
   :: ru       & !distance from u-nodes to the nacelle            (m)
    , rv       & !                    v                           (m)
-   , rw         !                    w                           (m)
+   , rw       & !                    w                           (m)
+   , rc         !                    c                           (m)
+
+  REAL, DIMENSION( its:ite, kts:kte, jts:jte ) &
+  :: dz !RSA thickness of each grid cell                         (m)
 
   REAL, DIMENSION( kts:kte ) &
   :: turb_z   & ! z coordinate at a turbine                      (m)  
@@ -218,7 +229,7 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
   INTEGER :: i, j, k, n, i_start, j_start, i_end, j_end, k_end, k_top, i_inflow, j_inflow, k_inflow, &
              i_turbine, j_turbine
 
-  REAL :: dxo2, dyo2, zmin_k, zmin_kp1, zmax_k, zmax_kp1, dz, eps
+  REAL :: dxo2, dyo2, zmin_k, zmin_kp1, zmax_k, zmax_kp1, eps
 
   REAL :: theta
 
@@ -242,20 +253,22 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
 
   REAL, DIMENSION(2)    :: fnft
   REAL                  :: fn, ft
-  REAL                  :: v0, d0, v0t_avg, d0t_avg !RSA
-  REAL                  :: u_c, v_c !RSA
+  REAL                  :: v0, v0_u, v0_v, v0_w, v0_c, d0, v0t_avg, d0t_avg !RSA
+  REAL                  :: u_c, v_c, w_c !RSA
   REAL                  :: rho
   REAL                  :: rpm, blades, pitchdeg
   REAL                  :: rotor_radius
   REAL                  :: dscale, cscale
   REAL                  :: zeta
-  REAL                  :: fx, fy, fz
+  REAL                  :: fx, fy, fz !RSA
   REAL                  :: cnst
   REAL                  :: v0inst
   INTEGER               :: nv0t
 
   INTEGER, DIMENSION(n_turbines) :: turbine_on_patch
   INTEGER, DIMENSION(n_turbines) :: inflow_on_patch
+  REAL, DIMENSION(n_turbines) :: turb_power_local !turbine power calculation on local processor
+  REAL, DIMENSION(n_turbines) :: omega !turbine rotation rate (rad/s)
 
   REAL                  :: time_fac
   REAL                  :: xtime
@@ -265,7 +278,7 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
   REAL                  :: ws_geo
   REAL                  :: nt
 
-  REAL                  :: acc_u, acc_v, acc_w
+  REAL                  :: acc_u, acc_v, acc_w, acc_c
   REAL                  :: radmin, radmax
 
 ! variables for yawing
@@ -297,7 +310,7 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
   REAL                  :: adenom, bdenom
   REAL                  :: adenom2, bdenom2
   REAL                  :: hoff
-  REAL                  :: drut, drvt, drwt
+  REAL                  :: drut, drvt, drwt, drct
   REAL                  :: radius
 
 ! RSA for reading in turbine info from file
@@ -615,6 +628,22 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
                                     w_z(i_end,k,j_end+1) ) 
       ENDDO
 
+      DO i = i_start-1, i_end+1
+        DO k = kts, k_end
+          DO j = j_start-1, j_end+1
+            c_z(i,k,j) = 0.5 * ( w_z(i,k,j) + w_z(i,k+1,j) )
+          ENDDO
+        ENDDO
+      ENDDO
+
+      DO i = i_start, i_end
+        DO k = kts, k_end
+          DO j = j_start, j_end
+            dz(i,k,j) = w_z(i,k+1,j) - w_z(i,k,j)
+          ENDDO
+        ENDDO
+      ENDDO
+
       DO j = j_start, j_end           ! compute u_z and v_z up to k_end
         DO k = kts, k_end
           DO i = i_start, i_end+1
@@ -681,7 +710,8 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
 
         u_c = 0.5 * ( u(i_inflow,k_inflow,j_inflow) + u(i_inflow+1,k_inflow,j_inflow) )
         v_c = 0.5 * ( v(i_inflow,k_inflow,j_inflow) + v(i_inflow,k_inflow,j_inflow+1) )
-        v0inst = u_c*cos(theta)*cos(tilt)+v_c*sin(theta)*cos(tilt) !Instantaneous velocity component normal to the rotor.
+        w_c = 0.5 * ( w(i_inflow,k_inflow,j_inflow) + w(i_inflow,k_inflow+1,j_inflow) )
+        v0inst = u_c*cos(theta)*cos(tilt) + v_c*sin(theta)*cos(tilt) - w_c*sin(tilt) !Instantaneous velocity component normal to the rotor.
 
         IF (wp_opt .EQ. 3 ) THEN
           IF ( ( u_c .GE. 0.0 ) .AND. ( v_c .LT. 0.0 ) ) THEN   !Wind direction, independent of the
@@ -741,6 +771,8 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
 !____________________________________________________________________________________________________________________________
 
   DO n = 1, n_turbines
+  
+      turb_power_local(n) = 0.0 !RSA initializing for power calculation
 
       dum = 0.0                         ! Looking for problems...
       DO k = 1,n_timeseries
@@ -846,14 +878,16 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
          pitchdeg = calc_pitch_ge16( v0t_avg )
       ENDIF
    
-      DO j = j_start, j_end
-        DO i = i_start, i_end
-           rotrate(i,j) = 2.0*pi*rpm/60.0
-           thrust(i,j)  = 0.0
-           torque(i,j)  = 0.0
-           power(i,j)   = 0.0
-        ENDDO
-      ENDDO
+      omega(n) = 2.0*pi*rpm/60.0
+
+      ! DO j = j_start, j_end
+      !   DO i = i_start, i_end
+      !      rotrate(i,j) = 2.0*pi*rpm/60.0
+      !      thrust(i,j)  = 0.0
+      !      torque(i,j)  = 0.0
+      !      power(i,j)   = 0.0
+      !   ENDDO
+      ! ENDDO
 
       !____________________________________________________________________________________________________________________________
       !
@@ -880,6 +914,7 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
             dzu(i,k,j) = u_z(i,k,j) - hub_height(n)
             dzv(i,k,j) = v_z(i,k,j) - hub_height(n)
             dzw(i,k,j) = w_z(i,k,j) - hub_height(n)
+            dzc(i,k,j) = c_z(i,k,j) - hub_height(n)
           ENDDO
         ENDDO
       ENDDO
@@ -890,6 +925,7 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
             ru(i,k,j) = sqrt(dau(i,j)**2+dzu(i,k,j)**2)
             rv(i,k,j) = sqrt(dav(i,j)**2+dzv(i,k,j)**2)
             rw(i,k,j) = sqrt(daw(i,j)**2+dzw(i,k,j)**2)
+            rc(i,k,j) = sqrt(daw(i,j)**2+dzc(i,k,j)**2)
             wp_acc_u(i,k,j) = 0.0
             wp_acc_v(i,k,j) = 0.0
             wp_acc_w(i,k,j) = 0.0
@@ -926,13 +962,33 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
 
              v0 = u(i,k,j)*cos(theta)*cos(tilt) + v(i,k,j)*sin(theta)*cos(tilt) - w(i,k,j)*sin(tilt)  
 
+             v0_u = u(i,k,j) * cos(theta)*cos(tilt) &
+                    + 0.25 * ( v(i,k,j) + v(i-1,k,j) + v(i-1,k,j+1) + v(i,k,j+1) ) * sin(theta)*cos(tilt) &
+                    - 0.25 * ( w(i,k,j) + w(i-1,k,j) + w(i-1,k+1,j) + w(i,k+1,j) ) * sin(tilt)
+
+             v0_v =   0.25 * ( u(i,k,j) + u(i,k,j-1) + u(i+1,k,j-1) + u(i+1,k,j) ) * cos(theta)*cos(tilt) &
+                    + v(i,k,j) * sin(theta)*cos(tilt) &
+                    - 0.25 * ( w(i,k,j) + w(i,k,j-1) + w(i,k+1,j-1) + w(i,k+1,j) ) * sin(tilt)
+             
+             IF (k .GT. kts) THEN
+                v0_w =   0.5 * ( fnm(k) * ( u(i,k,j) + u(i+1,k,j) ) + fnp(k) * ( u(i,k-1,j) + u(i+1,k-1,j) ) ) * cos(theta)*cos(tilt) &
+                       + 0.5 * ( fnm(k) * ( v(i,k,j) + v(i,k,j+1) ) + fnp(k) * ( v(i,k-1,j) + v(i,k-1,j+1) ) ) * sin(theta)*cos(tilt) &
+                       - w(i,k,j) * sin(tilt)
+             ELSE
+                v0_w = 0.0 !RSA-JDM This should be the kinematic surface BC
+             ENDIF
+
+             v0_c =  0.5 * ( u(i,k,j) + u(i+1,k,j) ) * cos(theta)*cos(tilt) &
+                   + 0.5 * ( v(i,k,j) + v(i,k,j+1) ) * sin(theta)*cos(tilt) &
+                   - 0.5 * ( w(i,k,j) + w(i,k+1,j) ) * sin(tilt)
+
              !Tower------------------------------------------------------	
              IF (cdt .GT. 0.0 ) THEN
                 IF (dzu(i,k,j) .le. -(radmin)) then !NM tower below hub
                    Rtwr = abs(dzu(i,k,j))*(Rtwrb-Rtwrt)/hub_height(n)+Rtwrt !NM linear	 
                    IF ( abs( dau(i,j) ) .le. Rtwr) then !NM tower below hub; dau needs to be less than tower radius
                    !JDM-04-201 Note to self. This should be fixed so that the tower is not grid location dependent. Same goes for the hub!
-                      fn = 0.5*rho*v0*v0*cdt !NM force per unit area for tower
+                      fn = 0.5*rho*v0_u*v0_u*cdt !NM force per unit area for tower
                       ft = 0.0 !NM no tangential force
                       acc_u = (1.0/adenom)*exp(-(dru(i,j)**2)/bdenom) !NM 1-D !Gaussian
                       fx = fn*cos(theta) !NM to x direction
@@ -944,7 +1000,7 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
                    Rtwr = abs(dzv(i,k,j))*(Rtwrb-Rtwrt)/hub_height(n)+Rtwrt !NM linear	 
                    IF ( abs( dav(i,j) ) .le. Rtwr) then !NM tower below hub; dau needs to be less than tower radius
                    !JDM-04-201 Note to self. This should be fixed so that the tower is not grid location dependent. Same goes for the hub!
-                      fn = 0.5*rho*v0*v0*cdt !NM force per unit area for tower
+                      fn = 0.5*rho*v0_v*v0_v*cdt !NM force per unit area for tower
                       ft = 0.0 !NM no tangential force
                       acc_v = (1.0/adenom)*exp(-(drv(i,j)**2)/bdenom) !NM 1-D !Gaussian
                       fy = fn*sin(theta) !NM to x direction
@@ -955,9 +1011,10 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
 
 !------ X ---- 
 
-        IF ( (ru(i,k,j) .le. radmin) .and. (ru(i,k,j) .gt. -0.001) ) then !HUB-----------------------------------	
-          
-           fn = 0.5*rho*v0*v0*cdh  !NM only need force per unit area
+        ! IF ( (ru(i,k,j) .le. radmin) .and. (ru(i,k,j) .gt. -0.001) ) then !HUB-----------------------------------	
+          IF (ru(i,k,j) .le. radmin) then !HUB----------------------------------- !RSA
+
+           fn = 0.5*rho*v0_u*v0_u*cdh  !NM only need force per unit area
 
            ft = 0.0 !NM no tangential force
 
@@ -1003,12 +1060,12 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
              acc_u = (1.0/adenom2)*exp(-(drut**2)/bdenom2) !NM 1-D
 
              !RSA adding logic to prevent fx from being NaN. See explanation in calc_fnft below.
-             if ( v0 .gt. 0.0 ) then
+             if ( v0_u .gt. 0.0 ) then
                 if (turbine_opt .eq. 15) then
-                   fnft = calc_fnft_psu15( v0, rho, blades, blade_length(n), rotor_diameter(n),   &
+                   fnft = calc_fnft_psu15( v0_u, rho, blades, blade_length(n), rotor_diameter(n),   &
                                               radius, pitchdeg, rpm, dscale, cscale) 
                 elseif (turbine_opt .eq. 16) then
-                   fnft = calc_fnft_ge16( v0, rho, blades, blade_length(n), rotor_diameter(n),   &
+                   fnft = calc_fnft_ge16( v0_u, rho, blades, blade_length(n), rotor_diameter(n),   &
                                               radius, pitchdeg, rpm, dscale, cscale)
                 endif
 
@@ -1039,9 +1096,10 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
 
 !------- Y ----
 
-        IF ( (rv(i,k,j) .le. radmin) .and. (rv(i,k,j) .gt. -0.001) ) then !HUB------------------------------------	
+        ! IF ( (rv(i,k,j) .le. radmin) .and. (rv(i,k,j) .gt. -0.001) ) then !HUB------------------------------------	
+        IF (rv(i,k,j) .le. radmin) then !HUB--------------------------- !RSA
 
-           fn = 0.5*rho*v0*v0*cdh 
+           fn = 0.5*rho*v0_v*v0_v*cdh 
 
            ft = 0.0
 
@@ -1077,19 +1135,19 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
                acc_v = (1.0/adenom2)*exp(-(drvt**2)/bdenom2) !NM 1-D
 
                !RSA adding logic to prevent fy from being NaN. See explanation in calc_fnft below.
-               if ( v0 .gt. 0.0 ) then
+               if ( v0_v .gt. 0.0 ) then
                    if (turbine_opt .eq. 15) then
-                      fnft = calc_fnft_psu15( v0, rho, blades, blade_length(n), rotor_diameter(n),   &
+                      fnft = calc_fnft_psu15( v0_v, rho, blades, blade_length(n), rotor_diameter(n),   &
                                               radius, pitchdeg, rpm, dscale, cscale)  
                    elseif (turbine_opt .eq. 16) then
-                      fnft = calc_fnft_ge16( v0, rho, blades, blade_length(n), rotor_diameter(n),   &
+                      fnft = calc_fnft_ge16( v0_v, rho, blades, blade_length(n), rotor_diameter(n),   &
                                               radius, pitchdeg, rpm, dscale, cscale)  
                    endif
 
                    fn = fnft(1)
                    ft = fnft(2)
 
-                   fy = fn*sin(theta)*cos(tilt) - ft*sin(zeta)*cos(theta) - ft*cos(zeta)*sin(tilt)*sin(theta)	!NM 
+                   fy = fn*sin(theta)*cos(tilt) - ft*sin(zeta)*cos(theta) - ft*cos(zeta)*sin(tilt)*sin(theta)!NM 
                 else
                    !RSA set fy to 0 for now, but turbine should eventually yaw into place.
                    ! write(*,*) "RSA to prevent NaNs, skipping call to calc_fnft for fy: i,j,k=",i,j,k 
@@ -1132,12 +1190,12 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
               acc_w = (1.0/adenom2)*exp(-(drwt**2)/bdenom2) !NM 1-D
 
               !RSA adding logic to prevent fz from being NaN. See explanation in calc_fnft below.
-              if ( v0 .gt. 0.0 ) then
+              if ( v0_w .gt. 0.0 ) then
                  if (turbine_opt .eq. 15) then
-                    fnft = calc_fnft_psu15( v0, rho, blades, blade_length(n), rotor_diameter(n), &
+                    fnft = calc_fnft_psu15( v0_w, rho, blades, blade_length(n), rotor_diameter(n), &
                                             radius, pitchdeg, rpm, dscale, cscale ) 
                  elseif (turbine_opt .eq. 16) then 
-                    fnft = calc_fnft_ge16( v0, rho, blades, blade_length(n), rotor_diameter(n), &
+                    fnft = calc_fnft_ge16( v0_w, rho, blades, blade_length(n), rotor_diameter(n), &
                                             radius, pitchdeg, rpm, dscale, cscale )
                  endif
 
@@ -1159,7 +1217,56 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
 
 !JDM          wp_ts(i,k,j) = -1.0*mut(i,j)*acc_w*cnst*fz
  
+!------ C ---- 
 
+        ! IF ( (ru(i,k,j) .le. radmin) .and. (ru(i,k,j) .gt. -0.001) ) then !HUB-----------------------------------	
+          IF (rc(i,k,j) .le. radmin) then !HUB------------------------------ !RSA
+
+           ft = 0.0 !NM no tangential force
+
+          ELSE !GAD-------------------------------------------------------------------------------------------------
+
+            IF (tilt .eq. 0.0) THEN !No Tilt-----------------------------------------------------------------------
+
+                drct = drw(i,j)-hoff !distance only depends on x value!!!if theta is zero the normal distance will be x0
+
+                radius = sqrt( daw(i,j)**2 + dzc(i,k,j)**2 )
+
+                zeta = atan2( dzc(i,k,j), daw(i,j) )
+
+            ELSE !Tilt ------------------------------------------------------------------------------------------
+
+                drct = calc_yprime( 1.0/tan(tilt), 1.0, 0.0, (drw(i,j)-hoff), dzc(i,k,j) ) 
+
+                zd = calc_yprime( -tan(tilt), 1.0, 0.0, (drw(i,j)-hoff), dzc(i,k,j) ) 
+
+                radius = sqrt( daw(i,j)**2 + zd**2 ) !NM new radial distance to tilted turbine:
+
+                zeta = atan2( zd, daw(i,j) )
+
+             ENDIF !Tilt or No Tilt-------------------------------------------------------------------------------
+
+             acc_c = (1.0/adenom2)*exp(-(drct**2)/bdenom2) !NM 1-D
+
+             !RSA adding logic to prevent fx from being NaN. See explanation in calc_fnft below.
+             if ( v0_c .gt. 0.0 ) then
+                if (turbine_opt .eq. 15) then
+                   fnft = calc_fnft_psu15( v0_c, rho, blades, blade_length(n), rotor_diameter(n),   &
+                                              radius, pitchdeg, rpm, dscale, cscale) 
+                elseif (turbine_opt .eq. 16) then
+                   fnft = calc_fnft_ge16( v0_c, rho, blades, blade_length(n), rotor_diameter(n),   &
+                                              radius, pitchdeg, rpm, dscale, cscale)
+                endif
+
+                ft = fnft(2)
+
+              else
+                !RSA set fx to 0 for now, but turbine should eventually yaw into place.
+                ! write(*,*) "RSA to prevent NaNs, skipping call to calc_fnft for fx: i,j,k=",i,j,k 
+                ft = 0.0
+              endif
+                
+        ENDIF !Hub or GAD-----------------------------------------------------------------------------------------
 
 !!         Assuming turbine rotors are perpendicualar to x axis. Generalize to arbitrary orientation.  
 !
@@ -1173,6 +1280,9 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
 !!            ENDIF
 !!
 
+              !RSA sum up power for each turbine on local processor
+              turb_power_local(n) = turb_power_local(n) + omega(n)*ft*acc_c*rc(i,k,j)*dx*dy*dz(i,k,j)
+
           ENDDO         ! j loop
         ENDDO         ! k loop
       ENDDO       ! i loop
@@ -1182,6 +1292,11 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
 200 CONTINUE !time-averaged inflow is < cutin or > cutout speed
 
   ENDDO  !n loop over all turbines
+
+#ifdef DM_PARALLEL
+  !RSA sum turbine power over all procs
+  CALL MPI_REDUCE(turb_power_local,turb_power,n_turbines,MPI_REAL,MPI_SUM,master,MPI_COMM_WORLD,ierr)
+#endif
 
 END SUBROUTINE gen_act_disk
 

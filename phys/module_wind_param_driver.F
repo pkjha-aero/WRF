@@ -19,6 +19,7 @@ SUBROUTINE wind_param_driver( grid, config_flags,           &
                               blade_length,                 &
                               theta_turbine,                &
                               cutinspd, cutoutspd,          & !RSA
+                              turb_power,                   & !RSA
                               acc_yaw_err,                  & 
                               wp_acc_u, wp_acc_v, wp_acc_w, &
                               wp_ts,                        & !JDM May 2, 2013
@@ -27,6 +28,8 @@ SUBROUTINE wind_param_driver( grid, config_flags,           &
                               n_turbines,                   &
                               n_timeseries,                 &
                               v0t, d0t, itimestep,          & !JDM May 2, 2013
+                              xlat_v, xlong_u, hgt,         & !RSA
+                              fnm, fnp,                     & !RSA
                               ids,ide,jds,jde,kds,kde,      & 
                               ims,ime,jms,jme,kms,kme,      &
                               ips,ipe,jps,jpe,kps,kpe,      &
@@ -70,9 +73,15 @@ SUBROUTINE wind_param_driver( grid, config_flags,           &
   REAL, DIMENSION( ims:ime, jms:jme) ,         INTENT( IN  ) &
   ::  muu,       & ! column pressure at u nodes  (kg m-1 s-2)                     
       muv,       & !                    v                                                                
-      mut          !                    w
+      mut,       & !                    w
+      xlat_v,    &
+      xlong_u,   &
+      hgt
 
- REAL, DIMENSION( n_turbines ),                 INTENT( INOUT ) &
+  REAL, DIMENSION( kms:kme) ,         INTENT( IN  ) &
+  :: fnm, fnp
+
+  REAL, DIMENSION( n_turbines ),                 INTENT( INOUT ) &
   :: x_turbine       & !                         (m)
    , y_turbine       & !                         (m)
    , x_inflow        & !                         (m)
@@ -82,7 +91,8 @@ SUBROUTINE wind_param_driver( grid, config_flags,           &
    , blade_length    & !                         (m)
    , theta_turbine   & !                         (deg)
    , cutinspd        & !                         (m/s)
-   , cutoutspd         !                         (m/s)
+   , cutoutspd       & !                         (m/s)
+   , turb_power        !                         (kg*m2/s3)
 
  REAL, DIMENSION( n_turbines ),                 INTENT( INOUT ) &
   :: acc_yaw_err
@@ -151,6 +161,7 @@ SUBROUTINE wind_param_driver( grid, config_flags,           &
                          blade_length,                     &
                          theta_turbine,                    &
                          cutinspd, cutoutspd,              & !RSA
+                         turb_power,                       & !RSA
                          acc_yaw_err,                      & 
                          wp_acc_u, wp_acc_v, wp_acc_w,     & 
                          wp_ts,                            & !JDM May 2, 2013
@@ -160,8 +171,8 @@ SUBROUTINE wind_param_driver( grid, config_flags,           &
                          muu, muv, mut,                    & 
                          rdzw, dx, dy, dt,                 & !JDM May 2, 2013
                          v0t, d0t, itimestep,              & !JDM May 2, 2013
-                         grid%xlat_v, grid%xlong_u,        & !RSA
-                         grid%ht,                          & !RSA
+                         xlat_v, xlong_u, hgt,             & !RSA
+                         fnm, fnp,                         & !RSA
                          ids, ide, jds, jde, kds, kde,     &
                          ims, ime, jms, jme, kms, kme,     &
                          ips, ipe, jps, jpe, kps, kpe,     &

@@ -828,6 +828,7 @@ BENCH_START(wind_param_driver_tim)
                                   grid%blade_length,                           &
                                   grid%theta_turbine,                          &
                                   grid%cutinspd, grid%cutoutspd,               & !RSA
+                                  grid%turb_power,                             & !RSA
                                   grid%acc_yaw_err,                            & 
                                   grid%wp_acc_u, grid%wp_acc_v, grid%wp_acc_w, &
                                   grid%wp_ts,                                  &
@@ -836,6 +837,8 @@ BENCH_START(wind_param_driver_tim)
                                   config_flags%n_turbines,                     &
                                   config_flags%n_timeseries,                   &
                                   grid%v0t, grid%d0t, grid%itimestep,          &
+                                  grid%xlat_v, grid%xlong_u, grid%ht,          & !RSA
+                                  grid%fnm, grid%fnp,                          & !RSA
                                   ids, ide, jds, jde, kds, kde,                &
                                   ims, ime, jms, jme, kms, kme,                &
                                   ips, ipe, jps, jpe, kps, kpe,                &
