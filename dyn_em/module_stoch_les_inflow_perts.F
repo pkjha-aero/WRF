@@ -161,7 +161,7 @@
        j_end   = MIN(jte,jde-1)
 
        ngc_h = 8      !width of perturbation in horizontal directions
-       ngc_v = 4      !depth of perturbation in vertical
+       ngc_v = 2      !depth of perturbation in vertical
        ncells_h = 3
 
        DO j=j_start, j_end
@@ -245,8 +245,8 @@ mpblhdsum  = wrf_dm_sum_real(mpblhpsum)
         k_ws = 4
 
         sf(1) = 0.0
-        sf(2) = 0.33
-        sf(3) = 0.67
+        ! sf(2) = 0.33
+        ! sf(3) = 0.67
 
 !       print*,'prtnk,k_wg,k_ws',prtnk,k_wg,k_ws
 
@@ -480,7 +480,7 @@ counter = wrf_dm_sum_real(num_pts_in_sum)
     
        print*,'tpertmag',tpertmag
 
-       prtdt = 0.875*(1.0/cos(anglespavgdavg))*ngc_h*ncells_h*dx/wsspavgdavg  !angle corrects for mean wind direction
+       prtdt = 0.75*(1.0/cos(anglespavgdavg))*ngc_h*ncells_h*dx/wsspavgdavg  !angle corrects for mean wind direction
                                                                               !0.875 corrrects for ramping at inflow, 21/24
 
 !       print*,'anglespavgdavg',anglespavgdavg*180.0/piconst
