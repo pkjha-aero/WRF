@@ -21,7 +21,7 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
                             turbine_opt,                  & !RSA
                             windturb_spec,                & !RSA
                             turb_loc_in_latlon,           & !RSA
-                            truelat1, truelat2,           & !RSA, PKJ: What is this for? Why two lat?
+                            truelat1, truelat2,           & !RSA, PKJ: What is this for? Why two lat? As per WRF stabdrad code...need to look at example code.
                             stand_lon,                    & !RSA
                             n_turbines,                   &
                             n_timeseries,                 &
@@ -39,7 +39,7 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
                             wp_acc_u, wp_acc_v, wp_acc_w, & !PKJ: these variables likely not needed. 
                             wp_ts,                        & !PKJ: for diagnostic as mentioned later. We can probably remove this
                             thrust, torque,               &
-                            rotrate, power,               & !PKJ: Check if "power" and "turb_power" are for the same purpose. Is "rotrate" same as "omega"?
+                            rotrate, power,               & !PKJ: Check if "power" and "turb_power" are for the same purpose. Is "rotrate" same as "omega"? This could have been replaced by "omega"...ensure that
                             u, v, w,                      &
                             muu, muv, mut,                &
                             rdzw,  dx, dy, dt,            &
@@ -61,7 +61,7 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
 !
 ! Lookup tables use generic Penn State 1.5 MW GE SLE turbine (approximate).
 !
-! Note that wind direction and turbine yaw are measured counterclockwise from
+! Note that wind direction and turbine yaw (better call it theta ??) are measured counterclockwise from
 ! 0 deg. for a westerly wind / west-facing turbine. Thus, 90 is a southerly
 ! wind / south-facing turbine, 180 is an easterly wind / east-facing turbine,
 ! 270 is a northerly wind / north-facing turbine, up to 360 deg.
@@ -70,7 +70,7 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
 ! - Code will not compute GAD forces if flow is from behind the turbine; turbine
 ! must first yaw into mean flow direction (when yaw error exceeds threshold) 
 ! before forces will be calculated.
-! PKJ: why do we need this?
+! PKJ: why do we need this? ...Difference between the yaw and inflow vector.
 ! - Added ability specify upwind distance for turbine inflow calculation relative 
 ! to turbine hub.
 ! PKJ: Are we using something like 2D upstream? We have this as an input
@@ -87,7 +87,7 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
 
   ! PKJ: Why is the order i, k, j and not i, j, k?
   REAL, DIMENSION( ims:ime, kms:kme, jms:jme ),  INTENT(INOUT) & ! PKJ: "tendency"?
-  :: ru_tendf    & ! u tendency * mass                   (kg s-4)
+  :: ru_tendf    & ! u tendency * mass                   (kg s-4) ! PKJ--(1/s)*(kg/m/s^2)*(m/s)
    , rv_tendf    & ! v
    , rw_tendf      ! w
    
@@ -146,7 +146,7 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
    REAL, DIMENSION( n_timeseries, n_turbines ),   INTENT(INOUT) &
   :: v0t          & ! Wind speed time series               (m s-1)
    , d0t            ! Wind direction time series.            (deg)
-                    ! 0 is north, positive rotating clockwise  
+                    ! 0 is north, positive rotating clockwise  ! Standard met terms
 
   REAL, DIMENSION( ims:ime, kms:kme, jms:jme ),  INTENT( IN  ) &
   :: u           & ! u-velocity                  (m s-1)
@@ -202,10 +202,10 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
    , v_z           !                v       (m)
    
   ! PKJ: Why a 3-D array?
-  ! PKJ: what are c-nodes?
+  ! PKJ: what are c-nodes? Related to column mass
   REAL, DIMENSION( its-1:ite+1, kts:kte, jts-1:jte+1 ) &
-  :: w_z         & !z coordinate of w-nodes  (m)
-   , c_z           !z coordinate of c-nodes  (m) 
+  :: w_z         & !z coordinate of w-nodes  (m) ! Grid point (node)
+   , c_z           !z coordinate of c-nodes  (m) ! Like w_z but at celle centers (at half level)
 
   REAL, DIMENSION( its:ite, jts:jte ) &
   :: dru       & !normal distance from u-nodes to the rotor plane (m)
@@ -218,7 +218,7 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
    , daw         !                     w                              (m)
 
   REAL, DIMENSION( its-1:ite+1, kts:kte, jts-1:jte+1 ) &
-  :: dzu       & !normal distance from u-nodes to the rotor plane (m) !PKJ:: Shouldn't it be vertical distance from rotor axis line? How are these different from dru, drv, drw?
+  :: dzu       & !normal distance from u-nodes to the rotor plane (m) !PKJ:: Shouldn't it be vertical distance from rotor axis line? How are these different from dru, drv, drw? Check back later
    , dzv       & !                    v                           (m)
    , dzw       & !                    w                           (m)
    , dzc         !                    c                           (m)
@@ -285,7 +285,7 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
   REAL, DIMENSION(n_turbines) :: turb_power_local !turbine power calculation on local processor
   REAL, DIMENSION(n_turbines) :: omega !turbine rotation rate (rad/s). PKJ: then why do we have rotrate?
 
-  REAL                  :: time_fac ! PKJ: purpose?
+  REAL                  :: time_fac ! PKJ: purpose? was used for debugging 
   REAL                  :: xtime
   REAL                  :: u_geo
   REAL                  :: v_geo
@@ -746,12 +746,13 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
           IF ( ( u_c .GE. 0.0 ) .AND. ( v_c .LT. 0.0 ) ) THEN   !Wind direction, independent of the
              d0inst = 360.0 - (atan2(u_c,v_c)*180.0/pi - 90.0)  !rotor angle. 0 and 360 are Westerly. 
           ELSE                                                  !Positive values are counterclockwise
-             d0inst = 90.0 - atan2(u_c,v_c)*180.0/pi            !up to 360. No negative values.
+             d0inst = 90.0 - atan2(u_c,v_c)*180.0/pi            !up to 360. No negative values.!PKJ: This is different from standard met definition
+			 !PKJ: We should probably make all the angles consistent, we may have to change the projection routines
           ENDIF
         ENDIF
 
 #ifdef DM_PARALLEL
-        tag=n !??
+        tag=n !?? !PKJ: Beter to use this to make is turbine specific
         CALL MPI_SEND(v0inst,1,MPI_REAL,master,tag,            &
                              MPI_COMM_WORLD,ierr )
         IF (wp_opt .EQ. 3 ) THEN
@@ -787,11 +788,12 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
     ENDIF
   ENDIF
 
-  CALL MPI_BARRIER(MPI_COMM_WORLD,ierr) ! PKJ: Why is mpi_barrier before mpi_bcast?
+  CALL MPI_BARRIER(MPI_COMM_WORLD,ierr)
   CALL MPI_BCAST(v0n,n_turbines,MPI_REAL,master,MPI_COMM_WORLD,ierr)
   IF (wp_opt .EQ. 3 ) THEN
     CALL MPI_BCAST(d0n,n_turbines,MPI_REAL,master,MPI_COMM_WORLD,ierr)
   ENDIF
+  ! PKJ we put a barrier here also?
 #endif 
 
 !____________________________________________________________________________________________________________________________
@@ -860,7 +862,7 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
 
           sgn = 1.0
           IF ( delta .LT. 0.0 ) sgn = -1.0
-          yaw_err = sgn*(delta)*(delta)*dt !PKJ: Why do we have "delta" twice?
+          yaw_err = sgn*(delta)*(delta)*dt !PKJ: Analogous to squarred error
           acc_yaw_err(n) = acc_yaw_err(n) + yaw_err
 
         ELSE ! turbine is yawing or ready to start
@@ -954,6 +956,7 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
       DO j = j_start, j_end
         DO k = kts, k_end
           DO i = i_start, i_end
+		  !PKJ: Refer to Jeff's email from 10/29/2020
             ru(i,k,j) = sqrt(dau(i,j)**2+dzu(i,k,j)**2) !PKJ: Distance of grid point form the axis line??
             rv(i,k,j) = sqrt(dav(i,j)**2+dzv(i,k,j)**2)
             rw(i,k,j) = sqrt(daw(i,j)**2+dzw(i,k,j)**2)
@@ -973,8 +976,9 @@ USE module_gad_ge16, ONLY: calc_rpm_ge16, calc_pitch_ge16, calc_fnft_ge16
 !      adenom = sigma*sqrt(2.0*pi)
 !      bdenom  = 2.0*sigma*sigma
       ! PKJ: Why should the definition of sigma depend on theta? Irrespective of yaw the decay should happen as a function of distance
+	  ! PKJ: 
       sigma   = (abs(dx*cos(theta))+abs(dy*sin(theta))) !NM so normal for rotor plane sqrt(dx*dy)	!!!This is the standard deviation
-      adenom  = sigma*sqrt(2.0*pi)                  !want integral=1 for Gaussian ;accel will have units of 1/m
+      adenom  = sigma*sqrt(2.0*pi)                  ! want integral=1 for Gaussian ;accel will have units of 1/m
       bdenom  = 2.*sigma*sigma                      !!determines spread of gaussian
 
       !NM sigmar normal to rotor plane
@@ -1393,6 +1397,7 @@ SUBROUTINE calc_distance( x_turb, y_turb, theta_turb,     &
 !                  ||                        p     |
 !__________________||___ surface                            
 
+!PKJ: shouldn't it be dzu instead of dau in the left figure?
 
 !
 ! 1. Obtain coefficients for normal distance, dau, to axial plane, the plane 
